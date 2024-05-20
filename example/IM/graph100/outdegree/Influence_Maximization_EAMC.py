@@ -177,7 +177,8 @@ class ObjectiveIM(object):
 
     def GS(self, B, alpha, offSpringFit):
         if offSpringFit[0, 2] >= 1:
-            return 1.0 * offSpringFit[0, 0] / (1.0 - (1.0 / exp(alpha * offSpringFit[0, 1] / B)))
+            # return 1.0 * offSpringFit[0, 0] / (1.0 - (1.0 / exp(alpha * offSpringFit[0, 1] / B)))
+            return 1.0 * offSpringFit[0, 0]
         else:
             return 0
 
@@ -228,7 +229,8 @@ class ObjectiveIM(object):
             indice = int(offSpringFit[0, 2])
 
 
-            if offSpringFit[0, 2] < 1 or offSpringFit[0, 1] < B / 2:
+            if offSpringFit[0, 2] < 1 \
+            or offSpringFit[0, 1] < B / 2:
                 t = t + 1
                 continue
             isadd1 = 0
