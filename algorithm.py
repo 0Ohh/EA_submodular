@@ -55,23 +55,24 @@ class SUBMINLIN(object):
             return tempMax
 
 
-    def mutation_new(self, s, B, cx, pm=-1):
+    def mutation_new(self, s, Bu, pm=-1):
         # 保证期望值
-        n = int(s.shape[1])
+        nn = int(s.shape[1])
+        cx = np.array(self.cost)
         if pm == -1:
-            pm = 1 / n
+            pm = 1 / nn
         a = np.dot(cx, (1 - s))
         b = np.dot(cx, s)
         c = (1 - s).sum()
         d = s.sum()
-        B_b = B - b
+        B_b = Bu - b
         p0 = (a*(abs(B_b) + pm) - c * B_b) / (c*b + a*d)
         p1 = (b*(abs(B_b) + pm) + d * B_b) / (c*b + a*d)
 
-        change1_to_0 = np.random.binomial(1, 1 - p1, n)
+        change1_to_0 = np.random.binomial(1, 1 - p1, nn)
         s = np.multiply(s, change1_to_0)
 
-        change0_to_1 = np.random.binomial(1, 1 - p0, n)
+        change0_to_1 = np.random.binomial(1, 1 - p0, nn)
         mul = np.multiply(1 - s, change0_to_1)
         s = 1 - mul
         return s
