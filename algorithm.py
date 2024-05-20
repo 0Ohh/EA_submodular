@@ -54,6 +54,29 @@ class SUBMINLIN(object):
         else:
             return tempMax
 
+
+    def mutation_new(self, s, B, cx, pm=-1):
+        # 保证期望值
+        n = int(s.shape[1])
+        if pm == -1:
+            pm = 1 / n
+        a = np.dot(cx, (1 - s))
+        b = np.dot(cx, s)
+        c = (1 - s).sum()
+        d = s.sum()
+        B_b = B - b
+        p0 = (a*(abs(B_b) + pm) - c * B_b) / (c*b + a*d)
+        p1 = (b*(abs(B_b) + pm) + d * B_b) / (c*b + a*d)
+
+        change1_to_0 = np.random.binomial(1, 1 - p1, n)
+        s = np.multiply(s, change1_to_0)
+
+        change0_to_1 = np.random.binomial(1, 1 - p0, n)
+        mul = np.multiply(1 - s, change0_to_1)
+        s = 1 - mul
+        return s
+
+
     def mutation(self, s):
         rand_rate = 1.0 / (self.n)  # the dummy items are considered
         change = np.random.binomial(1, rand_rate, self.n)
@@ -140,12 +163,14 @@ class SUBMINLIN(object):
         Z = np.mat(np.zeros([self.n+1, self.n], 'int8'))  # initiate the population
         W = np.mat(np.zeros([self.n+1, self.n], 'int8'))  # initiate the population
         population =np.mat(np.zeros([1, self.n], 'int8'))
-        Xfitness=np.mat(np.zeros([self.n+1, 4]))# f(s), c(s),|s|,g(s)
+        Xfitness = np.mat(np.zeros([self.n+1, 4]))# f(s), c(s),|s|,g(s)
         Yfitness = np.mat(np.zeros([self.n+1, 4]))  # f(s), c(s),|s|,g(s)
         Zfitness = np.mat(np.zeros([self.n+1, 4]))  # f(s), c(s),|s|,g(s)
         Wfitness = np.mat(np.zeros([self.n+1, 4]))  # f(s), c(s),|s|,g(s)
         Wfitness[:,1]=float("inf")
         offSpringFit = np.mat(np.zeros([1, 4]))  # f(s),c(s),|s|,g(s)
+
+        # TODO 未明
         xysame=[0]*(self.n+1)
         zwsame=[0]*(self.n+1)
         xysame[0]=1
@@ -166,19 +191,22 @@ class SUBMINLIN(object):
                         resultIndex = p
                 print(Yfitness[resultIndex, :],popSize)
             iter1 += 1
-            s = population[randint(1, popSize) - 1, :]  # choose a individual from population randomly
-            offSpring = self.mutation(s)  # every bit will be flipped with probability 1/n
-            offSpringFit[0, 1] = self.CS(offSpring)
+
+            # 从popu随机挑一个，然后突变
+            s = population[randint(1, popSize) - 1, :]
+            offSpring = self.mutation(s)
+            # 计算f，cost，|s|，最后g
             offSpringFit[0, 0]=self.FS(offSpring)
+            offSpringFit[0, 1] = self.CS(offSpring)
             offSpringFit[0, 2] = offSpring[0,:].sum()
             offSpringFit[0, 3]=self.GS(B,1.0,offSpringFit)
-            indice=int(offSpringFit[0, 2])
-            if offSpringFit[0,2]<1:
+            indice=int(offSpringFit[0, 2]) # s中1的个数
+            if offSpringFit[0,2]<1:  # 空集 跳过
                 t=t+1
                 continue
             isadd1=0
             isadd2=0
-            if offSpringFit[0,1]<=B:
+            if offSpringFit[0,1]<=B:  # cost小于B，则：
                 if offSpringFit[0, 3]>=Xfitness[indice,3]:
                     X[indice,:]=offSpring
                     Xfitness[indice,:]=offSpringFit
@@ -237,9 +265,5 @@ class SUBMINLIN(object):
                 maxValue = Yfitness[p, 0]
                 resultIndex = p
         print(Yfitness[resultIndex, :],popSize)
-
-
-
-
 
 
