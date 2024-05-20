@@ -3,6 +3,7 @@ import numpy as np
 import datetime
 from math import ceil,exp
 from random import random,randint
+import time
 
 class ObjectiveIM(object):
     def __init__(self, weightMatrix,nodeNum):
@@ -176,7 +177,8 @@ class ObjectiveIM(object):
 
     def GS(self, B, alpha, offSpringFit):
         if offSpringFit[0, 2] >= 1:
-            return 1.0 * offSpringFit[0, 0] / (1.0 - (1.0 / exp(alpha * offSpringFit[0, 1] / B)))
+            # return 1.0 * offSpringFit[0, 0] / (1.0 - (1.0 / exp(alpha * offSpringFit[0, 1] / B)))
+            return 1.0 * offSpringFit[0, 0]
         else:
             return 0
 
@@ -201,8 +203,13 @@ class ObjectiveIM(object):
         iter1 = 0
         T = int(ceil(self.n * self.n * 20))
         kn = int(self.n * self.n)
+
+        time0 = time.time()
         while t < T:
-            if iter1 == kn:
+            if t % 2000 == 0:
+                print(t, 'spent time=', time.time() - time0, 's')
+
+            if iter1 == 2000            :
                 iter1 = 0
                 resultIndex = -1
                 maxValue = float("-inf")
@@ -220,7 +227,10 @@ class ObjectiveIM(object):
             offSpringFit[0, 2] = offSpring[0, :].sum()
             offSpringFit[0, 3] = self.GS(B, 1.0, offSpringFit)
             indice = int(offSpringFit[0, 2])
-            if offSpringFit[0, 2] < 1:
+
+
+            if offSpringFit[0, 2] < 1 \
+            or offSpringFit[0, 1] < B / 2:
                 t = t + 1
                 continue
             isadd1 = 0
