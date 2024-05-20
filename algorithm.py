@@ -1,4 +1,6 @@
 import sys
+import time
+
 import numpy as np
 from random import sample
 from random import randint, random
@@ -12,8 +14,10 @@ class SUBMINLIN(object):
         return np.array(np.where(s[0, :] == 1)[1]).reshape(-1)
 
     def FS(self, s):
+        return 1
 
     def CS(self, s):
+        return 1
 
     def Greedy(self, B):
         self.result = np.mat(np.zeros((1, self.n)), 'int8')
@@ -82,6 +86,45 @@ class SUBMINLIN(object):
         rand_rate = 1.0 / (self.n)  # the dummy items are considered
         change = np.random.binomial(1, rand_rate, self.n)
         return np.abs(s - change)
+
+    def MyPOSS(self, B, n_slots, L, R=None, delta=5):
+        print(self.n)
+        print(self.cost)
+        print(self.B)
+        if R is None: R = L
+
+        popu_index_tuples = [(0, 0)]  # TODO 一个list[tuples]，整个popu的每个个体对应popu_slots中的index(slot_i, 个体_i)
+                                # TODO 这个列表只会append，不会删东西
+        # popSize = 1
+        # TODO 分好槽的popu，索引一个个体：[slot_i, 个体_i, :]
+        popu_slots = np.mat(np.zeros([n_slots, delta, self.n], 'int8'))
+        slot_wid = (L + R) / n_slots
+
+        t = 0
+        T = int(ceil(self.n * 100))
+        print_tn = 10000
+        time0 = time.time()
+        while t < T:
+            if t % print_tn == 0:
+                print(t, ' time', time.time() - time0, 's')
+            rand_ind = randint(1, len(popu_index_tuples) - 1) # 随机第几个，几是相对于popSize而言的
+            x_tuple = popu_index_tuples[rand_ind]
+            x = popu_slots[x_tuple]
+            x = self.mutation_new(x, B)  # x突变
+
+            cost_x = self.CS(x)
+            f_x = self.FS(x)
+
+            # “朝目标选择” Targeted-Selection
+            cost_x_slot_index = int(
+                (cost_x - (B - L)) // slot_wid  # 向下取整除法
+            )
+
+            slot_for_x = popu_slots[cost_x_slot_index]
+            # TODO 把x与slot内所有个体比较 f，（可能需要维护slot全体f值的np array）
+
+
+
 
     def POMC(self,B):
         # 初始化popu，1行n列，即1个个体；后面增多变成p行
