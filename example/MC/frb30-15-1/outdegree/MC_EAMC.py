@@ -1,4 +1,6 @@
 import sys
+import time
+
 import numpy as np
 from random import sample
 from random import randint, random
@@ -141,9 +143,12 @@ class SUBMINLIN(object):
                 resultIndex = p
         return fitness[resultIndex, 0]
 
-    def GS(self,B,alpha,offSpringFit):
+    def GS(self,B,alpha,offSpringFit, useG):
         if offSpringFit[0,2] >= 1:
-            return 1.0*offSpringFit[0,0]/(1.0-(1.0/exp(alpha*offSpringFit[0,1]/B)))
+            if useG:
+                return 1.0*offSpringFit[0,0]/(1.0-(1.0/exp(alpha*offSpringFit[0,1]/B)))
+            else:
+                return 1.0*offSpringFit[0,0]
         else:
             return 0
 
@@ -183,7 +188,20 @@ class SUBMINLIN(object):
         iter1 = 0
         T = int(ceil(n * n * 20))
         kn = int(self.n*self.n)
+
+
+        kn = 10000
+        useG = True
+
+        if useG:
+            print('G!!')
+        else:
+            print('F!!')
+
+        time0 = time.time()
         while t < T:
+            if t % kn == 0:
+                print(t, 'spent time=', time.time() - time0, 's')
             if iter1 == kn:
                 iter1 = 0
                 resultIndex = -1
@@ -199,7 +217,7 @@ class SUBMINLIN(object):
             offSpringFit[0, 1] = self.CS(offSpring)
             offSpringFit[0, 0]=self.FS(offSpring)
             offSpringFit[0, 2] = offSpring[0,:].sum()
-            offSpringFit[0, 3]=self.GS(B,1.0,offSpringFit)
+            offSpringFit[0, 3]=self.GS(B,1.0,offSpringFit, useG)
             indice=int(offSpringFit[0, 2])
             if offSpringFit[0,2]<1:
                 t=t+1
@@ -322,5 +340,5 @@ if __name__ == "__main__":
     q = 6
 
     myObject.InitDVC(n, q)  # sampleSize,n,
-    B=500
+    B=1500
     myObject.EAMC(B)

@@ -1,4 +1,6 @@
 import sys
+import time
+
 import numpy as np
 from random import sample
 from random import randint, random
@@ -41,50 +43,21 @@ class SUBMINLIN(object):
             tempSum += self.cost[item]
         return tempSum
 
-    def Greedy(self, B):
-        self.result = np.mat(np.zeros((1, self.n)), 'int8')
-        V_pi=[1]*self.n
-        selectedIndex = 0
-        while sum(V_pi)>0:
-            #print(sum(V_pi))
-            f=self.FS(self.result)
-            maxVolume = -1
-            for j in range(0, self.n):
-                if V_pi[j] == 1:
-                    self.result[0, j] = 1
-                    fv = self.FS(self.result)
-                    #cv=self.CS(self.result)
-                    tempVolume=1.0*(fv-f)/self.cost[j]
-                    if tempVolume > maxVolume:
-                        maxVolume = tempVolume
-                        selectedIndex = j
-                    self.result[0, j] = 0
-            self.result[0,selectedIndex]=1
-            if self.CS(self.result)>B:
-                self.result[0, selectedIndex] = 0
-            V_pi[selectedIndex]=0
-
-        tempMax=0.
-        tempresult=np.mat(np.zeros((1, self.n)), 'int8')
-        for i in range(self.n):
-            if self.cost[i]<=B:
-                tempresult[0,i]=1
-                tempVolume=self.FS(tempresult)
-                if tempVolume>tempMax:
-                    tempMax=tempVolume
-                tempresult[0, i] = 0
-        tempmax1=self.FS(self.result)
-        if tempmax1>tempMax:
-            return tempmax1
-        else:
-            return tempMax
-
     def mutation(self, s):
         rand_rate = 1.0 / (self.n)  # the dummy items are considered
         change = np.random.binomial(1, rand_rate, self.n)
         return np.abs(s - change)
 
     def POMC(self,B):
+
+        print(self.cost)
+        print(B)
+
+        # for i in range(self.n):
+        #     gne = np.mat(np.zeros([1, self.n], 'int8'))
+        #     gne[0, i] = 1
+        #     print(self.FS(gne))
+
         population = np.mat(np.zeros([1, self.n], 'int8'))  # initiate the population
         fitness = np.mat(np.zeros([1, 2]))
         popSize = 1
@@ -93,6 +66,18 @@ class SUBMINLIN(object):
         # T=int(ceil((n+self.constraint)*k*k*exp(1)*exp(1)))
         T = int(ceil(n * n * 20))
         kn = int(self.n * self.n)
+
+        useG = False
+        if useG == True:
+            print('G!!!')
+        else:
+            print('F!!!')
+
+        time0 = time.time()
+        kn = 10000
+
+        ll = 0.5
+
         while t < T:
             if iter == kn:
                 iter = 0
@@ -102,8 +87,8 @@ class SUBMINLIN(object):
                     if fitness[p, 1] <= B and fitness[p, 0] > maxValue:
                         maxValue = fitness[p, 0]
                         resultIndex = p
-                print(fitness[resultIndex, :],popSize)
-                #print(popSize)
+                print(np.ceil(time.time() - time0), 's')
+                print(t, 'f c pop', fitness[resultIndex, :],popSize, 'true-f if cost=B', fitness[resultIndex, 0] * (1-np.exp(-ll)))
             iter += 1
             s = population[randint(1, popSize) - 1, :]  # choose a individual from population randomly
             offSpring = self.mutation(s)  # every bit will be flipped with probability 1/n
@@ -113,6 +98,22 @@ class SUBMINLIN(object):
                 t += 1
                 continue
             offSpringFit[0, 0] = self.FS(offSpring)
+
+
+            if useG:
+                if offSpring.sum() >= 1:
+                    # print('?', offSpring.sum(), 'cost', offSpringFit[0,1], 'chuyi', (1.0-(1.0/exp(offSpringFit[0,1]/B))))
+
+                    offSpringFit[0, 0] = offSpringFit[0, 0] / (1.0-(1.0/
+                                                                    exp(
+                                                                        (abs(offSpringFit[0,1] - B) + ll*B)/B
+                                                                    )
+                                                                    ))
+                else:
+                    offSpringFit[0, 0] = -1
+
+
+
             hasBetter = False
             for i in range(0, popSize):
                 if (fitness[i, 0] > offSpringFit[0, 0] and fitness[i, 1] <= offSpringFit[0, 1]) or (
@@ -139,9 +140,9 @@ class SUBMINLIN(object):
                 resultIndex = p
         return fitness[resultIndex, 0]
 
-    def GS(self,B,alpha,offSpringFit):
+    def GS(self,B,offSpringFit):
         if offSpringFit[0,2] >= 1:
-            return 1.0*offSpringFit[0,0]/(1.0-(1.0/exp(alpha*offSpringFit[0,1]/B)))
+            return 1.0*offSpringFit[0,0]/(1.0-(1.0/exp(offSpringFit[0,1]/B)))
         else:
             return 0
 
@@ -187,5 +188,5 @@ if __name__ == "__main__":
     q = 6
 
     myObject.InitDVC(n, q)  # sampleSize,n,
-    B=500
+    B=1500
     print(myObject.POMC(B))
