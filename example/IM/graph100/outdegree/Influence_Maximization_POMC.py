@@ -3,6 +3,7 @@ import numpy as np
 import datetime
 from math import ceil,exp
 from random import random,randint
+import time
 
 class ObjectiveIM(object):
     def __init__(self, weightMatrix,nodeNum):
@@ -126,7 +127,12 @@ class ObjectiveIM(object):
         # T=int(ceil((n+self.constraint)*k*k*exp(1)*exp(1)))
         T = int(ceil(self.n * self.n * 20))
         kn = int(self.n * self.n)
+
+        time0 = time.time()
         while t < T:
+            if t % 5000 == 0:
+                print(t, 'spent time=', time.time() - time0, 's')
+
             if iter == kn:
                 iter = 0
                 resultIndex = -1
