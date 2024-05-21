@@ -1,4 +1,6 @@
 import sys
+import time
+
 import numpy as np
 from random import sample
 from random import randint, random
@@ -193,6 +195,10 @@ class SUBMINLIN(object):
         iter1 = 0
         T = int(ceil(n * n * 20))
         kn = int(self.n*self.n)
+
+        kn = 10000
+        time0 = time.time()
+
         while t < T:
             if iter1 == kn:
                 iter1 = 0
@@ -203,6 +209,7 @@ class SUBMINLIN(object):
                         maxValue = Yfitness[p, 0]
                         resultIndex = p
                 print(Yfitness[resultIndex, :],popSize)
+                print(np.ceil(time.time()-time0))
             iter1 += 1
             s = population[randint(1, popSize) - 1, :]  # choose a individual from population randomly
             offSpring = self.mutation(s)  # every bit will be flipped with probability 1/n
@@ -302,5 +309,5 @@ if __name__ == "__main__":
     n =450
     q = 6
     myObject.InitDVC(n, q)  # sampleSize,n,
-    B=1
+    B = n / 2
     myObject.EAMC(B)

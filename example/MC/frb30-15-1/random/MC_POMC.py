@@ -154,7 +154,7 @@ class SUBMINLIN(object):
 
     def GS(self,B,offSpringFit):
         if offSpringFit[0,2] >= 1:
-            return 1.0*offSpringFit[0,0]/(1.0-(1.0/exp(alpha*offSpringFit[0,1]/B)))
+            return 1.0*offSpringFit[0,0]/(1.0-(1.0/exp(offSpringFit[0,1]/B)))
         else:
             return 0
 
