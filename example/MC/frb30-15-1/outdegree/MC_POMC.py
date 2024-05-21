@@ -49,9 +49,15 @@ class SUBMINLIN(object):
         return np.abs(s - change)
 
     def POMC(self,B):
-
+        print(self.n)
+        c = np.array(self.cost)
         print(self.cost)
-        print(B)
+        print(c.sum())
+        print(c.mean())
+        print(c.min())
+        print(c.max())
+
+        print('B', B)
 
         # for i in range(self.n):
         #     gne = np.mat(np.zeros([1, self.n], 'int8'))
@@ -88,7 +94,7 @@ class SUBMINLIN(object):
                         maxValue = fitness[p, 0]
                         resultIndex = p
                 print(np.ceil(time.time() - time0), 's')
-                print(t, 'f c pop', fitness[resultIndex, :],popSize, 'true-f if cost=B', fitness[resultIndex, 0] * (1-np.exp(-ll)))
+                print(t, 'f c pop', fitness[resultIndex, :],popSize, '||', population[resultIndex].sum())
             iter += 1
             s = population[randint(1, popSize) - 1, :]  # choose a individual from population randomly
             offSpring = self.mutation(s)  # every bit will be flipped with probability 1/n
@@ -188,5 +194,5 @@ if __name__ == "__main__":
     q = 6
 
     myObject.InitDVC(n, q)  # sampleSize,n,
-    B=1500
+    B= 900
     print(myObject.POMC(B))

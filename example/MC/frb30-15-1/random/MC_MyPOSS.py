@@ -110,6 +110,11 @@ class SUBMINLIN(object):
 
 
     def MyPOSS(self, B, n_slots, L, R=None, delta=5):
+
+        c = np.array(self.cost)
+        c = np.sort(c)
+        print(c)
+
         print(self.n)
         print(self.cost)
         print(B)
