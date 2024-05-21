@@ -97,7 +97,9 @@ class SUBMINLIN(object):
                                 # TODO 这个列表只会append，不会删东西
         # popSize = 1
         # TODO 分好槽的popu，索引一个个体：[slot_i, 个体_i, :]
-        popu_slots = np.mat(np.zeros([n_slots, delta, self.n], 'int8'))
+        popu_slots = np.array(np.zeros([n_slots, delta, self.n], 'int8'))
+        # TODO 分好槽的popu的f，cost； 索引一个个体的f / c：[slot_i, 个体_i, (0 / 1)]
+        f_c_slots = np.array(np.zeros([n_slots, delta, 2], 'int8'))
         slot_wid = (L + R) / n_slots
 
         t = 0
@@ -105,24 +107,80 @@ class SUBMINLIN(object):
         print_tn = 10000
         time0 = time.time()
         while t < T:
+            t += 1
             if t % print_tn == 0:
                 print(t, ' time', time.time() - time0, 's')
-            rand_ind = randint(1, len(popu_index_tuples) - 1) # 随机第几个，几是相对于popSize而言的
+                best_f = -np.inf
+                best_tupl_index = 666666666
+                for tupl in popu_index_tuples:
+                    fc_i = f_c_slots[tupl]
+                    if fc_i[1] > B:
+                        continue
+                    if fc_i[0] > best_f:
+                        best_f = fc_i[0]
+                        best_tupl_index = tupl
+                x_best = popu_slots[
+                    popu_index_tuples[best_tupl_index]
+                ]
+                best_f_c = f_c_slots[
+                    popu_index_tuples[best_tupl_index]
+                ]
+                print('f, cost ',  best_f_c)
+
+            rand_ind = randint(1, len(popu_index_tuples) - 1) # 随机选第几个，几是相对于popSize而言的
             x_tuple = popu_index_tuples[rand_ind]
             x = popu_slots[x_tuple]
             x = self.mutation_new(x, B)  # x突变
 
-            cost_x = self.CS(x)
             f_x = self.FS(x)
+            cost_x = self.CS(x)
 
             # “朝目标选择” Targeted-Selection
-            cost_x_slot_index = int(
+            x_slot_index = int(
                 (cost_x - (B - L)) // slot_wid  # 向下取整除法
             )
 
-            slot_for_x = popu_slots[cost_x_slot_index]
-            # TODO 把x与slot内所有个体比较 f，（可能需要维护slot全体f值的np array）
-
+            # slot_for_x = popu_slots[cost_x_slot_index]
+            # TODO 把x与slot内所有个体比较 f，（可能需要维护slot全体f,c值的np array）
+            worst_x_index = None
+            worst_f = np.inf
+            x_is_added = False
+            for p in range(0, delta):  # p-> (0~5)
+                if f_c_slots[x_slot_index, p, 1] == 0:  # (第p个)某旧个体cost==0，即全0gene,说明槽未满
+                    # 直接把x放进这里
+                    x_is_added = True
+                    popu_slots[x_slot_index, p] = x
+                    f_c_slots[x_slot_index, p, 0] = f_x
+                    f_c_slots[x_slot_index, p, 1] = cost_x
+                    popu_index_tuples.append((x_slot_index, p))
+                    break
+                if f_c_slots[x_slot_index, p, 0] < worst_f:
+                    worst_x_index = p
+            if (not x_is_added) and f_x > worst_f: # x暂未加入，故当前槽已满，但新个体fx > 最差者的f
+                # x替换最差者
+                x_is_added = True
+                popu_slots[x_slot_index, worst_x_index] = x
+                f_c_slots[x_slot_index, worst_x_index, 0] = f_x
+                f_c_slots[x_slot_index, worst_x_index, 1] = cost_x
+                popu_index_tuples.append((x_slot_index, worst_x_index))
+        # end While
+        # 输出答案
+        best_f = -np.inf
+        best_tupl_index = 666666666
+        for tupl in popu_index_tuples:
+            fc_i = f_c_slots[tupl]
+            if fc_i[1] > B:
+                continue
+            if fc_i[0] > best_f:
+                best_f = fc_i[0]
+                best_tupl_index = tupl
+        x_best = popu_slots[
+            popu_index_tuples[best_tupl_index]
+        ]
+        best_f_c = f_c_slots[
+            popu_index_tuples[best_tupl_index]
+        ]
+        return x_best, best_f_c
 
 
 
