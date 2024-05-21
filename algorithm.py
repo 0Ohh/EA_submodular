@@ -59,6 +59,11 @@ class SUBMINLIN(object):
             return tempMax
 
 
+    def mutation(self, s):
+        rand_rate = 1.0 / (self.n)  # the dummy items are considered
+        change = np.random.binomial(1, rand_rate, self.n)
+        return np.abs(s - change)
+
     def mutation_new(self, s, Bu, pm=-1):
         # 保证期望值
         nn = int(s.shape[1])
@@ -81,11 +86,6 @@ class SUBMINLIN(object):
         s = 1 - mul
         return s
 
-
-    def mutation(self, s):
-        rand_rate = 1.0 / (self.n)  # the dummy items are considered
-        change = np.random.binomial(1, rand_rate, self.n)
-        return np.abs(s - change)
 
     def MyPOSS(self, B, n_slots, L, R=None, delta=5):
         print(self.n)

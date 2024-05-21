@@ -55,7 +55,10 @@ class SUBMINLIN(object):
         return tempSum
 
     def mutation(self, s):
+
+
         rand_rate = 1.0 / (self.n)  # the dummy items are considered
+        # rand_rate = 0.01
         change = np.random.binomial(1, rand_rate, self.n)
         return np.abs(s - change)
 
@@ -63,10 +66,13 @@ class SUBMINLIN(object):
 
         print(self.n)
         print(self.cost)
+        cos = np.array(self.cost)
+        print('avg cost', cos.sum()/len(self.cost))
+        print('sum cost', cos.sum())
         print(B)
 
-        # population = np.mat(np.zeros([1, self.n], 'int8'))  # initiate the population
-        population = np.mat(np.random.binomial(1, 0.7, self.n), 'int8')  # initiate the population
+        population = np.mat(np.zeros([1, self.n], 'int8'))  # initiate the population
+        # population = np.mat(np.random.binomial(1, 0.7, self.n), 'int8')  # initiate the population
 
 
         fitness = np.mat(np.zeros([1, 2]))
@@ -77,14 +83,14 @@ class SUBMINLIN(object):
         T = int(ceil(n * n * 40))
         kn = int(self.n * self.n)
 
-        useG = True
+        useG = False
         if useG == True:
             print('G!!!')
         else:
             print('F!!!')
 
         time0 = time.time()
-        kn = 10000
+        kn = 20000
 
         ll = 0.8
 
@@ -99,14 +105,20 @@ class SUBMINLIN(object):
                         resultIndex = p
                 print(np.ceil(time.time() - time0), 's')
                 print(t, 'f c pop', fitness[resultIndex, :],popSize, 'true-f if cost=B', fitness[resultIndex, 0] * (1-np.exp(-ll)))
+                print('| |', population[resultIndex, :].sum(), 'cost', self.CS(population[resultIndex, :]))
 
-                print(fitness)
+                if t > 80000:
+                    np.set_printoptions(precision=3, suppress=True)
+                    fit = np.array(fitness)
+                    print(fit[np.argsort(fit[:,0])])
+
+                # print(fitness)
             iter += 1
             s = population[randint(1, popSize) - 1, :]  # choose a individual from population randomly
             offSpring = self.mutation(s)  # every bit will be flipped with probability 1/n
             offSpringFit = np.mat(np.zeros([1, 2]))  # comparable value, size, original value
             offSpringFit[0, 1] = self.CS(offSpring)
-            if offSpringFit[0, 1] == 0 or offSpringFit[0, 1] > 2.0*B or offSpringFit[0, 1] < 0.7*B:
+            if offSpringFit[0, 1] == 0 or offSpringFit[0, 1] > 2.0*B: # or offSpringFit[0, 1] < 0.7*B:
                 t += 1
                 continue
             offSpringFit[0, 0] = self.FS(offSpring)
@@ -123,7 +135,6 @@ class SUBMINLIN(object):
                                                                     ))
                 else:
                     offSpringFit[0, 0] = 0.00001
-
 
 
             hasBetter = False
@@ -173,113 +184,7 @@ class SUBMINLIN(object):
         return resultList
 
 
-
-    def EAMC(self, B):##just consider cost is less B
-        X = np.mat(np.zeros([self.n+1, self.n], 'int8'))  # initiate the population
-        Y = np.mat(np.zeros([self.n+1, self.n], 'int8'))  # initiate the population
-        Z = np.mat(np.zeros([self.n+1, self.n], 'int8'))  # initiate the population
-        W = np.mat(np.zeros([self.n+1, self.n], 'int8'))  # initiate the population
-        population =np.mat(np.zeros([1, self.n], 'int8'))
-        Xfitness=np.mat(np.zeros([self.n+1, 4]))# f(s), c(s),|s|,g(s)
-        Yfitness = np.mat(np.zeros([self.n+1, 4]))  # f(s), c(s),|s|,g(s)
-        Zfitness = np.mat(np.zeros([self.n+1, 4]))  # f(s), c(s),|s|,g(s)
-        Wfitness = np.mat(np.zeros([self.n+1, 4]))  # f(s), c(s),|s|,g(s)
-        Wfitness[:,1]=float("inf")
-        offSpringFit = np.mat(np.zeros([1, 4]))  # f(s),c(s),|s|,g(s)
-        xysame=[0]*(self.n+1)
-        zwsame=[0]*(self.n+1)
-        xysame[0]=1
-        zwsame[0]=1
-        popSize = 1
-        t = 0  # the current iterate count
-        iter1 = 0
-        T = int(ceil(n * n * 20))
-        kn = int(self.n*self.n)
-        while t < T:
-            if iter1 == kn:
-                iter1 = 0
-                resultIndex = -1
-                maxValue = float("-inf")
-                for p in range(0, self.n+1):
-                    if Yfitness[p, 1] <= B and Yfitness[p, 0] > maxValue:
-                        maxValue = Yfitness[p, 0]
-                        resultIndex = p
-                print(Yfitness[resultIndex, :],popSize)
-            iter1 += 1
-            s = population[randint(1, popSize) - 1, :]  # choose a individual from population randomly
-            offSpring = self.mutation(s)  # every bit will be flipped with probability 1/n
-            offSpringFit[0, 1] = self.CS(offSpring)
-            offSpringFit[0, 0]=self.FS(offSpring)
-            offSpringFit[0, 2] = offSpring[0,:].sum()
-            offSpringFit[0, 3]=self.GS(B,1.0,offSpringFit)
-            indice=int(offSpringFit[0, 2])
-            if offSpringFit[0,2]<1:
-                t=t+1
-                continue
-            isadd1=0
-            isadd2=0
-            if offSpringFit[0,1]<=B:
-                if offSpringFit[0, 3]>=Xfitness[indice,3]:
-                    X[indice,:]=offSpring
-                    Xfitness[indice,:]=offSpringFit
-                    isadd1=1
-                if offSpringFit[0, 0]>=Yfitness[indice,0]:
-                    Y[indice,:]=offSpring
-                    Yfitness[indice, :] = offSpringFit
-                    isadd2=1
-                if isadd1+isadd2==2:
-                    xysame[indice] = 1
-                else:
-                    if isadd1+isadd2==1:
-                        xysame[indice] = 0
-            # count the population size
-            tempSize=1 #0^n is always in population
-            for i in range(1,self.n+1):
-                if Xfitness[i,2]>0:
-                    if Yfitness[i,2]>0 and xysame[i]==1:#np.linalg.norm(X[i,:]-Y[i,:])==0: #same
-                        tempSize=tempSize+1
-                    if Yfitness[i,2]>0 and xysame[i]==0:#np.linalg.norm(X[i,:]-Y[i,:])>0:
-                        tempSize=tempSize+2
-                    if Yfitness[i,2]==0:
-                        tempSize=tempSize+1
-                else:
-                    if Yfitness[i,2]>0:
-                        tempSize=tempSize+1
-            if popSize!=tempSize:
-                population=np.mat(np.zeros([tempSize, self.n], 'int8'))
-            popSize=tempSize
-            j=1
-            # merge the X,Y,Z,W
-            for i in range(1,self.n+1):
-                if Xfitness[i, 2] > 0:
-                    if Yfitness[i, 2] > 0 and xysame[i] == 1:
-                    #if Yfitness[i, 2] > 0 and np.linalg.norm(X[i, :] - Y[i, :]) == 0:  # same
-                        population[j,:]=X[i,:]
-                        j=j+1
-                    if Yfitness[i, 2] > 0 and xysame[i] == 0:
-                    #if Yfitness[i, 2] > 0 and np.linalg.norm(X[i, :] - Y[i, :]) > 0:
-                        population[j, :] = X[i, :]
-                        j=j+1
-                        population[j, :] = Y[i, :]
-                        j=j+1
-                    if Yfitness[i, 2] == 0:
-                        population[j, :] = X[i, :]
-                        j = j + 1
-                else:
-                    if Yfitness[i, 2] > 0:
-                        population[j, :] = Y[i, :]
-                        j = j + 1
-            t=t+1
-        resultIndex = -1
-        maxValue = float("-inf")
-        for p in range(0, self.n+1):
-            if Yfitness[p, 1] <= B and Yfitness[p, 0] > maxValue:
-                maxValue = Yfitness[p, 0]
-                resultIndex = p
-        print(Yfitness[resultIndex, :],popSize)
-
-
-def GetDVCData(fileName):# node number start from 0
+def GetDVCData(fileName):  # node number start from 0
     node_neighbor = []
     i = 0
     file = open(fileName)
@@ -301,8 +206,8 @@ if __name__ == "__main__":
     # read data and normalize it
     data = GetDVCData('./../frb30-15-1.mis')
     myObject = SUBMINLIN(data)
-    n =450
+    n = 450
     q = 6
     myObject.InitDVC(n, q)  # sampleSize,n,
-    B=n / 2
+    B= 2
     myObject.POMC(B)
