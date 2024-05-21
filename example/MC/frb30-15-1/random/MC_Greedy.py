@@ -302,5 +302,5 @@ if __name__ == "__main__":
     n =450
     q = 6
     myObject.InitDVC(n, q)  # sampleSize,n,
-    B=1
+    B=7
     print(myObject.Greedy(B))

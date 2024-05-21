@@ -111,9 +111,9 @@ class SUBMINLIN(object):
 
     def MyPOSS(self, B, n_slots, L, R=None, delta=5):
 
-        c = np.array(self.cost)
-        c = np.sort(c)
-        print(c)
+        # c = np.array(self.cost)
+        # c = np.sort(c)
+        # print(c)
 
         print(self.n)
         print(self.cost)
@@ -155,7 +155,7 @@ class SUBMINLIN(object):
 
                 if best_tupl == 666666666:
                     print(f_c_slots)
-                    return
+                    # return
 
                 print(best_tupl)
                 x_best = popu_slots[best_tupl]
@@ -163,12 +163,14 @@ class SUBMINLIN(object):
                 print('f, cost ',  best_f_c, 'pop size', len(popu_index_tuples), '????', best_f)
                 print('last epoch unsuccessful_mutation rate', int(100*(unsuccessful_muts/all_muts)), '%')
 
+
                 all_muts = 0
                 unsuccessful_muts = 0
                 if t > 5*print_tn:
-                    print(f_c_slots)
-                if t > 5*print_tn:
                     setMuPT()
+
+                if t > 50_0000:
+                    print(f_c_slots)
 
             rand_ind = np.random.randint(0, len(popu_index_tuples))  # 随机选第几个，几是相对于popSize而言的
             x_tuple = popu_index_tuples[rand_ind]
@@ -273,5 +275,8 @@ if __name__ == "__main__":
     q_ = 6
     myObject.InitDVC(n_, q_)  # sampleSize,n,
     B_ = 2
-    n_sl = 1
-    myObject.MyPOSS(B_, n_sl, B_/2, B_/2, delta=100)
+    n_sl = 10
+
+    coo = np.array(myObject.cost)
+
+    myObject.MyPOSS(B_, n_sl, coo.mean(), coo.mean(), delta=5)

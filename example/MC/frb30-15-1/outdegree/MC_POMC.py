@@ -175,11 +175,15 @@ def GetDVCData(fileName):# node number start from 0
     while i < 450:
         currentLine = []
         for line in lines:
+            # if np.random.rand(1) > 0.3:
+            #     print(line[:-1])
             items = line.split()
             if int(items[0]) == int(i+1):
                 currentLine.append(int(int(items[1])-1))
         node_neighbor.append(currentLine)
         i += 1
+        # i = 450
+
     file.close()
     return node_neighbor
 
@@ -194,5 +198,5 @@ if __name__ == "__main__":
     q = 6
 
     myObject.InitDVC(n, q)  # sampleSize,n,
-    B= 900
+    B= 800
     print(myObject.POMC(B))

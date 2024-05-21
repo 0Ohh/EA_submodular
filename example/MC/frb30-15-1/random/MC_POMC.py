@@ -104,13 +104,13 @@ class SUBMINLIN(object):
                         maxValue = fitness[p, 0]
                         resultIndex = p
                 print(np.ceil(time.time() - time0), 's')
-                print(t, 'f c pop', fitness[resultIndex, :],popSize, 'true-f if cost=B', fitness[resultIndex, 0] * (1-np.exp(-ll)))
+                print(t, 'f c pop', fitness[resultIndex, :],popSize)
                 print('| |', population[resultIndex, :].sum(), 'cost', self.CS(population[resultIndex, :]))
 
-                if t > 80000:
-                    np.set_printoptions(precision=3, suppress=True)
-                    fit = np.array(fitness)
-                    print(fit[np.argsort(fit[:,0])])
+                # if t > 80000:
+                #     np.set_printoptions(precision=3, suppress=True)
+                #     fit = np.array(fitness)
+                #     print(fit[np.argsort(fit[:,0])])
 
                 # print(fitness)
             iter += 1
