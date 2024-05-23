@@ -103,16 +103,18 @@ class SUBMINLIN(object):
             change0_to_1 = np.random.binomial(1, 1 - p0, nn)
             mul = np.multiply(1 - s, change0_to_1)
             s = 1 - mul
-            # if l_bound < self.CS(s) < r_bound and (s != s_ori).any():
-            if r_bound and (s != s_ori).any():
+            if l_bound < self.CS(s) < r_bound and (s != s_ori).any():
+            # if r_bound and (s != s_ori).any():
             # if 1:
                 return s
 
     def cross_over_partial(self, x, y):
         point = np.random.randint(1, len(x))
-        offs = np.copy(x)
-        offs[point:] = y[point:]
-        return offs
+        son = np.copy(x)
+        son[point:] = y[point:]
+        daughter = np.copy(y)
+        daughter[point:] = x[point:]
+        return daughter, son
 
     def Hamming_Distance(self, x, slot):
         return np.abs(x - slot).sum()
@@ -144,7 +146,7 @@ class SUBMINLIN(object):
 
         t = 0
         T = int(ceil(self.n * self.n * 100))
-        print_tn = 5000
+        print_tn = 10000
         time0 = time.time()
 
         all_muts = 0
@@ -154,7 +156,7 @@ class SUBMINLIN(object):
         unsuccessful_muts = 0
 
         while t < T:
-            t += 1
+            t += 2
             if t % print_tn == 0:
                 print(t, ' time', time.time() - time0, 's')
                 best_f = -np.inf
@@ -188,8 +190,18 @@ class SUBMINLIN(object):
                 if t > 5*print_tn:
                     setMuPT()
 
+
+                if t % (10*print_tn) == 0:
+                    print(f_c_slots)
+                    ham_slots = np.array(np.zeros([n_slots, delta, 1], 'float'))
+                    for tu in popu_index_tuples:
+                        ham_slots[tu] = self.Hamming_Distance(
+                            popu_slots[tu], popu_slots[tu[0]]
+                        )
+                    print(ham_slots)
+
                 # if t < 5_0000 or t > 50_0000:
-                #     # print(f_c_slots)
+                #     print(f_c_slots)
                 #     crit = popu_slots[4]
                 #     for p in crit:
                 #         print(self.Hamming_Distance(p, crit))
@@ -199,27 +211,35 @@ class SUBMINLIN(object):
                 #     plt.show()
 
 
-            rand_ind = np.random.randint(0, len(popu_index_tuples))  # 随机选第几个，几是相对于popSize而言的
+            rand_ind = np.random.randint(0, len(popu_index_tuples))  # 随机选第几个x，几是相对于popSize而言的
             x_tuple = popu_index_tuples[rand_ind]
             x = popu_slots[x_tuple]
 
-            # x = self.mutation_new(x, B)  # x突变
-            x_ori = np.copy(x)
-            x = self.mutation_new(x, (B-L+B+R)/2, B-L, B+R)  # x突变
-            mutation_dists_sum += np.abs(x - x_ori).sum()
+            rand_ind = np.random.randint(0, len(popu_index_tuples))  # 随机选第几个y，几是相对于popSize而言的
+            y_tuple = popu_index_tuples[rand_ind]
+            y = popu_slots[y_tuple]
 
-            # if (x == x_ori).all():
-            #     print('.', end='')
+            x_ori = np.copy(x)
+
+            x, y = self.cross_over_partial(x, y)
+
+            x = self.mutation_new(x, (B-L+B+R)/2, B-L, B+R)  # x突变
+            y = self.mutation_new(y, (B-L+B+R)/2, B-L, B+R)  # y突变
+            mutation_dists_sum += np.abs(x - x_ori).sum()
 
             f_x = float(self.FS(x))
             cost_x = self.CS(x)
-
-            # print(f_x, cost_x, x.sum())
+            f_y = float(self.FS(y))
+            cost_y = self.CS(y)
 
             # “朝目标选择” Targeted-Selection
             x_slot_index = int(
                 (cost_x - (B - L)) // slot_wid  # 向下取整除法
             )
+            y_slot_index = int(
+                (cost_y - (B - L)) // slot_wid  # 向下取整除法
+            )
+
             all_muts += 1
             if x_slot_index < 0 or x_slot_index >= len(popu_slots):
                 unsuccessful_muts += 1
@@ -227,46 +247,18 @@ class SUBMINLIN(object):
             if np.any(np.all(popu_slots[x_slot_index] == x, axis=1)):  # x 在当前slot中有孪生姐妹
                 unsuccessful_muts += 1
                 continue
+            if y_slot_index < 0 or y_slot_index >= len(popu_slots):
+                unsuccessful_muts += 1
+                continue
+            if np.any(np.all(popu_slots[y_slot_index] == y, axis=1)):  # x 在当前slot中有孪生姐妹
+                unsuccessful_muts += 1
+                continue
 
             mut_to_slots[x_slot_index] += 1
             successful_muts += 1
 
-            # slot_for_x = popu_slots[cost_x_slot_index]
-            # TODO 把x与slot内所有个体比较 f，（可能需要维护slot全体f,c值的np array）
-            worst_x_index = None
-            worst_f = np.inf
-            worst_cost = -1.0
-            x_is_added = False
-            for p in range(0, delta):  # p-> (0~5)
-                if f_c_slots[x_slot_index, p, 1] == 0:  # (第p个)某旧个体cost==0，即全0gene,说明槽未满
-                    # 直接把x放进这里
-                    x_is_added = True
-                    popu_slots[x_slot_index, p] = x
-                    f_c_slots[x_slot_index, p, 0] = f_x
-                    f_c_slots[x_slot_index, p, 1] = cost_x
-                    popu_index_tuples.append((x_slot_index, p))
-                    break
-                if (f_c_slots[x_slot_index, p, 0] < worst_f
-                        or
-                        (f_c_slots[x_slot_index, p, 0] == worst_f and f_c_slots[x_slot_index, p, 1] >= worst_cost)
-                ):
-                    # 遍历的第p比当前两方面最差的个体还要 更差（或一样差）
-                    worst_f = f_c_slots[x_slot_index, p, 0]
-                    worst_cost = f_c_slots[x_slot_index, p, 1]
-                    worst_x_index = p
-            if (not x_is_added) and f_x > worst_f: # x暂未加入，故当前槽已满，但新个体fx > 最差者的f
-                # x替换最差者
-                x_is_added = True
-                popu_slots[x_slot_index, worst_x_index] = x
-                f_c_slots[x_slot_index, worst_x_index, 0] = f_x
-                f_c_slots[x_slot_index, worst_x_index, 1] = cost_x
-
-            if (not x_is_added) and f_x == worst_f and cost_x < worst_cost:
-                # print('hhhhhhhhhhhhhhh')
-                x_is_added = True
-                popu_slots[x_slot_index, worst_x_index] = x
-                f_c_slots[x_slot_index, worst_x_index, 0] = f_x
-                f_c_slots[x_slot_index, worst_x_index, 1] = cost_x
+            self.put_into_popu(x, x_slot_index, f_x, cost_x, popu_slots, f_c_slots, popu_index_tuples, delta)
+            self.put_into_popu(y, y_slot_index, f_y, cost_y, popu_slots, f_c_slots, popu_index_tuples, delta)
 
         # end While
         # 输出答案
@@ -283,6 +275,41 @@ class SUBMINLIN(object):
         best_f_c = f_c_slots[best_tupl]
         return x_best, best_f_c
 
+    def put_into_popu(self, x, x_slot_index, f_x, cost_x, popu_slots, f_c_slots, popu_index_tuples, delta):
+        # TODO 把x与slot内所有个体比较 f，（可能需要维护slot全体f,c值的np array）
+        worst_x_index = None
+        worst_f = np.inf
+        worst_cost = -1.0
+        x_is_added = False
+        for p in range(0, delta):  # p-> (0~5)
+            if f_c_slots[x_slot_index, p, 1] == 0:  # (第p个)某旧个体cost==0，即全0gene,说明槽未满
+                # 直接把x放进这里
+                x_is_added = True
+                popu_slots[x_slot_index, p] = x
+                f_c_slots[x_slot_index, p, 0] = f_x
+                f_c_slots[x_slot_index, p, 1] = cost_x
+                popu_index_tuples.append((x_slot_index, p))
+                break
+            if (f_c_slots[x_slot_index, p, 0] < worst_f
+                    or
+                    (f_c_slots[x_slot_index, p, 0] == worst_f and f_c_slots[x_slot_index, p, 1] >= worst_cost)
+            ):
+                # 遍历的第p比当前两方面最差的个体还要 更差（或一样差）
+                worst_f = f_c_slots[x_slot_index, p, 0]
+                worst_cost = f_c_slots[x_slot_index, p, 1]
+                worst_x_index = p
+        if (not x_is_added) and f_x >= worst_f:  # x暂未加入，故当前槽已满，但新个体fx > 最差者的f
+            # x替换最差者
+            x_is_added = True
+            popu_slots[x_slot_index, worst_x_index] = x
+            f_c_slots[x_slot_index, worst_x_index, 0] = f_x
+            f_c_slots[x_slot_index, worst_x_index, 1] = cost_x
+        if (not x_is_added) and f_x == worst_f and cost_x < worst_cost:
+            # print('hhhhhhhhhhhhhhh')
+            x_is_added = True
+            popu_slots[x_slot_index, worst_x_index] = x
+            f_c_slots[x_slot_index, worst_x_index, 0] = f_x
+            f_c_slots[x_slot_index, worst_x_index, 1] = cost_x
 
 
 def GetDVCData(fileName):# node number start from 0

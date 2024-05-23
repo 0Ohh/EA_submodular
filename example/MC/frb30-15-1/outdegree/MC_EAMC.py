@@ -340,5 +340,5 @@ if __name__ == "__main__":
     q = 6
 
     myObject.InitDVC(n, q)  # sampleSize,n,
-    B=1500
+    B=400
     myObject.EAMC(B)

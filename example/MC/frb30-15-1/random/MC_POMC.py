@@ -55,12 +55,14 @@ class SUBMINLIN(object):
         return tempSum
 
     def mutation(self, s):
-
-
-        rand_rate = 1.0 / (self.n)  # the dummy items are considered
-        # rand_rate = 0.01
-        change = np.random.binomial(1, rand_rate, self.n)
-        return np.abs(s - change)
+        s_ori = s
+        while 1:
+            rand_rate = 1.0 / (self.n)  # the dummy items are considered
+            # rand_rate = 0.01
+            change = np.random.binomial(1, rand_rate, self.n)
+            s = np.abs(s_ori - change)
+            if (s != s_ori).any():
+                return s
 
     def POMC(self,B):
 
@@ -209,5 +211,5 @@ if __name__ == "__main__":
     n = 450
     q = 6
     myObject.InitDVC(n, q)  # sampleSize,n,
-    B= 2
+    B= 7
     myObject.POMC(B)

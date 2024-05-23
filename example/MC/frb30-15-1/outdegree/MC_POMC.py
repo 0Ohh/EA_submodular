@@ -95,6 +95,12 @@ class SUBMINLIN(object):
                         resultIndex = p
                 print(np.ceil(time.time() - time0), 's')
                 print(t, 'f c pop', fitness[resultIndex, :],popSize, '||', population[resultIndex].sum())
+
+            # if t % (10*kn) == 1:
+            #     np.set_printoptions(precision=3, suppress=True)
+            #     fit = np.array(fitness)
+            #     print(fit[np.argsort(fit[:, 0])])
+
             iter += 1
             s = population[randint(1, popSize) - 1, :]  # choose a individual from population randomly
             offSpring = self.mutation(s)  # every bit will be flipped with probability 1/n
@@ -198,5 +204,5 @@ if __name__ == "__main__":
     q = 6
 
     myObject.InitDVC(n, q)  # sampleSize,n,
-    B= 800
+    B= 400
     print(myObject.POMC(B))

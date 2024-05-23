@@ -1,0 +1,12 @@
+            if x_slot_index != 0:
+                left_slot_best_f = np.max([f_c_slots[x_slot_index - 1, :, 0]])
+                # print(left_slot_best_f)
+                if f_x < left_slot_best_f:
+                    return
+
+
+
+
+显然，HammingWrong结果大多数情况下比HammingCorrect要好！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
+
+
