@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 
@@ -95,7 +96,7 @@ class SUBMINLIN(object):
 
     def cross_over_partial(self, x, y):
 
-        # return x, y
+        return x, y
 
         point = np.random.randint(1, len(x))
         son = np.copy(x)
@@ -104,6 +105,14 @@ class SUBMINLIN(object):
         daughter[point:] = x[point:]
         return daughter, son
 
+    def cross_over_uniform(self, x, y):
+        # return x, y
+        white = np.random.binomial(1, 0.5, x.shape[0]
+                )         # 1 0 0 1 1
+        black = 1 - white # 0 1 1 0 0
+        son =       np.multiply(x, white) + np.multiply(y, black)
+        daughter =  np.multiply(x, black) + np.multiply(y, white)
+        return daughter, son
     def Hamming_Distance(self, x, slot):
         return np.abs(x - slot).sum()
 
@@ -150,6 +159,12 @@ class SUBMINLIN(object):
         successful_muts = 0
         unsuccessful_muts = 0
 
+        file_name = str(os.path.basename(__file__))
+        with open(file_name + '_result.txt', 'w') as fl:
+            fl.write('')
+            fl.flush()
+            fl.close()
+
         while t < T:
             t += 2
             if t % print_tn == 0:
@@ -173,6 +188,27 @@ class SUBMINLIN(object):
 
                 best_record.append(best_f_c[0])
                 t_record.append(t)
+
+                with open(file_name+'_result.txt', 'a') as fl:
+                    fl.write(str(t) + '\n')
+                    for i in range(popu_slots.shape[0]):
+                        for j in range(popu_slots.shape[1]):
+                            # fl.write(str(popu_slots[i][j])+'\n')
+                            pos = self.Position(popu_slots[i][j])
+                            for po in pos:
+                                fl.write(str(po)+'\t')
+                            fl.write('\t\t\t\t\t')
+                            fl.write(str(len(pos))+'\t')
+                            fl.write(str(ham_slots[i][j])+'\t')
+                            fl.write('\n')
+                        fl.write('\n')
+
+                    fl.write('\n')
+                    fl.write(str(f_c_slots) + '\n')
+                    fl.write(str(best_tupl) + '\n')
+                    fl.write('\n')
+                    fl.flush()
+                    fl.close()
 
                 print('f, cost=',  best_f_c, 'Card||=', x_best.sum(), 'popSize=', len(popu_index_tuples))
                 print('last epoch unsuccessful_mutation rate', int(100*(unsuccessful_muts/all_muts)), '%')
@@ -208,6 +244,7 @@ class SUBMINLIN(object):
             x_ori = np.copy(x)
 
             x, y = self.cross_over_partial(x, y)
+            # x, y = self.cross_over_uniform(x, y)
 
             x = self.mutation_new(x, (B-L+B+R)/2, B-L, B+R)  # x突变
             y = self.mutation_new(y, (B-L+B+R)/2, B-L, B+R)  # y突变

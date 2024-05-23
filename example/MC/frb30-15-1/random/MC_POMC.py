@@ -23,7 +23,7 @@ class SUBMINLIN(object):
         ########
         for i in range(self.n):
             self.cost[i]=float(items[i])
-        #print(self.cost)
+
         '''
         tempElemetn = [i]
         tempElemetn.extend(self.data[i])
@@ -109,7 +109,7 @@ class SUBMINLIN(object):
                 print(t, 'f c pop', fitness[resultIndex, :],popSize)
                 print('| |', population[resultIndex, :].sum(), 'cost', self.CS(population[resultIndex, :]))
 
-                # if t > 80000:
+                # if t % 80000:
                 #     np.set_printoptions(precision=3, suppress=True)
                 #     fit = np.array(fitness)
                 #     print(fit[np.argsort(fit[:,0])])
@@ -211,5 +211,5 @@ if __name__ == "__main__":
     n = 450
     q = 6
     myObject.InitDVC(n, q)  # sampleSize,n,
-    B= 7
+    B= 8
     myObject.POMC(B)

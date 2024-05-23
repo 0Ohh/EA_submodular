@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 
@@ -23,6 +24,9 @@ class SUBMINLIN(object):
             else:
                 self.cost[i] = 1
 
+            # self.cost[i] = np.log(self.cost[i] + 2.0)
+
+
     def Position(self, s):
         return np.array(np.where(s[0, :] == 1)[1]).reshape(-1)
 
@@ -41,6 +45,17 @@ class SUBMINLIN(object):
         tempSum = 0.0
         for item in pos:
             tempSum += self.cost[item]
+
+
+
+
+
+        # tempSum = np.log(tempSum + 2.0)
+
+
+
+
+
         return tempSum
 
     def mutation(self, s):
@@ -58,11 +73,11 @@ class SUBMINLIN(object):
         print(c.max())
 
         print('B', B)
-
-        # for i in range(self.n):
-        #     gne = np.mat(np.zeros([1, self.n], 'int8'))
-        #     gne[0, i] = 1
-        #     print(self.FS(gne))
+        file_name = str(os.path.basename(__file__))
+        with open(file_name + '_result.txt', 'w') as fl:
+            fl.write('')
+            fl.flush()
+            fl.close()
 
         population = np.mat(np.zeros([1, self.n], 'int8'))  # initiate the population
         fitness = np.mat(np.zeros([1, 2]))
@@ -95,6 +110,35 @@ class SUBMINLIN(object):
                         resultIndex = p
                 print(np.ceil(time.time() - time0), 's')
                 print(t, 'f c pop', fitness[resultIndex, :],popSize, '||', population[resultIndex].sum())
+
+                with open(file_name+'_result.txt', 'a') as fl:
+                    pop_fc = np.hstack((population, fitness))
+                    # print(pop_fc[[1, 2, 3]])
+                    pop_fc = np.array(pop_fc)
+
+                    # print(np.argsort(pop_fc[:, -1]))
+                    # print((pop_fc[:, -1]))
+
+                    pop_fc = pop_fc[np.argsort(pop_fc[:, -1])]
+                    # pop_fc = pop_fc.reshape(population.shape[0],  population.shape[1]+2)
+                    pop = (pop_fc[:, 0:-2])
+                    fc = pop_fc[:, -2:]
+
+                    fl.write(str(t) + '\n')
+                    for i in range(pop.shape[0]):
+                        pos = np.where(pop[i] == 1)[0]
+                        for po in pos:
+                            fl.write(str(po)+'\t')
+                        fl.write('\t\t\t\t\t')
+                        fl.write(str(len(pos)))
+                        fl.write('\n')
+                    fl.write('\n')
+
+                    fl.write('\n')
+                    fl.write(str(fc) + '\n')
+                    fl.flush()
+                    fl.close()
+
 
             # if t % (10*kn) == 1:
             #     np.set_printoptions(precision=3, suppress=True)

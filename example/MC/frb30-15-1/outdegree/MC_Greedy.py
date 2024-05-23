@@ -21,6 +21,8 @@ class SUBMINLIN(object):
             else:
                 self.cost[i] = 1
 
+            self.cost[i] = np.log(self.cost[i] + 2.0)
+
     def Position(self, s):
         return np.array(np.where(s[0, :] == 1)[1]).reshape(-1)
 
@@ -185,5 +187,5 @@ if __name__ == "__main__":
     q = 6
 
     myObject.InitDVC(n, q)  # sampleSize,n,
-    B=400
+    B=80
     print(myObject.Greedy(B))

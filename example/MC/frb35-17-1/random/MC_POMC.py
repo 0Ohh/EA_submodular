@@ -52,44 +52,6 @@ class SUBMINLIN(object):
             tempSum += self.cost[item]
         return tempSum
 
-    def Greedy(self, B):
-        self.result = np.mat(np.zeros((1, self.n)), 'int8')
-        V_pi=[1]*self.n
-        selectedIndex = 0
-        while sum(V_pi)>0:
-            #print(sum(V_pi))
-            f=self.FS(self.result)
-            maxVolume = -1
-            for j in range(0, self.n):
-                if V_pi[j] == 1:
-                    self.result[0, j] = 1
-                    fv = self.FS(self.result)
-                    #cv=self.CS(self.result)
-                    tempVolume=1.0*(fv-f)/self.cost[j]
-                    if tempVolume > maxVolume:
-                        maxVolume = tempVolume
-                        selectedIndex = j
-                    self.result[0, j] = 0
-            self.result[0,selectedIndex]=1
-            if self.CS(self.result)>B:
-                self.result[0, selectedIndex] = 0
-            V_pi[selectedIndex]=0
-
-        tempMax=0.
-        tempresult=np.mat(np.zeros((1, self.n)), 'int8')
-        for i in range(self.n):
-            if self.cost[i]<=B:
-                tempresult[0,i]=1
-                tempVolume=self.FS(tempresult)
-                if tempVolume>tempMax:
-                    tempMax=tempVolume
-                tempresult[0, i] = 0
-        tempmax1=self.FS(self.result)
-        if tempmax1>tempMax:
-            return tempmax1
-        else:
-            return tempMax
-
     def mutation(self, s):
         rand_rate = 1.0 / (self.n)  # the dummy items are considered
         change = np.random.binomial(1, rand_rate, self.n)
@@ -103,7 +65,7 @@ class SUBMINLIN(object):
         iter = 0
         # T=int(ceil((n+self.constraint)*k*k*exp(1)*exp(1)))
         T = int(ceil(n * n * 40))
-        kn = int(self.n * self.n)
+        kn = 20000
         while t < T:
             if iter == kn:
                 iter = 0
@@ -113,8 +75,8 @@ class SUBMINLIN(object):
                     if fitness[p, 1] <= B and fitness[p, 0] > maxValue:
                         maxValue = fitness[p, 0]
                         resultIndex = p
-                print(fitness[resultIndex, :],popSize)
-                #print(population[resultIndex,:].sum())
+                print(t, fitness[resultIndex, :],popSize)
+
             iter += 1
             s = population[randint(1, popSize) - 1, :]  # choose a individual from population randomly
             offSpring = self.mutation(s)  # every bit will be flipped with probability 1/n
@@ -297,10 +259,10 @@ def GetDVCData(fileName):# node number start from 0
 if __name__ == "__main__":
 
     # read data and normalize it
-    data = GetDVCData('../../frb35-17-1.mis')
+    data = GetDVCData('./../frb35-17-1.mis')
     myObject = SUBMINLIN(data)
     n =595
     q = 6
     myObject.InitDVC(n, q)  # sampleSize,n,
-    B=1
+    B=2.5
     myObject.POMC(B)

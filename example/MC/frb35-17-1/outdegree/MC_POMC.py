@@ -92,7 +92,7 @@ class SUBMINLIN(object):
         iter = 0
         # T=int(ceil((n+self.constraint)*k*k*exp(1)*exp(1)))
         T = int(ceil(n * n * 20))
-        kn = int(self.n * self.n)
+        kn = 20000
         while t < T:
             if iter == kn:
                 iter = 0
@@ -102,7 +102,7 @@ class SUBMINLIN(object):
                     if fitness[p, 1] <= B and fitness[p, 0] > maxValue:
                         maxValue = fitness[p, 0]
                         resultIndex = p
-                print(fitness[resultIndex, :],popSize)
+                print(t, fitness[resultIndex, :],popSize)
             iter += 1
             s = population[randint(1, popSize) - 1, :]  # choose a individual from population randomly
             offSpring = self.mutation(s)  # every bit will be flipped with probability 1/n
