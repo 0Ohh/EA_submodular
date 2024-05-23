@@ -150,7 +150,10 @@ class SUBMINLIN(object):
 
         popu_index_tuples = [(0, 0)]  # TODO 一个list[tuples]，整个popu的每个个体对应popu_slots中的index(slot_i, 个体_i)
             # TODO 分好槽的popu，索引一个个体：[slot_i, 个体_i, :]
-        popu_slots = np.array(np.zeros([n_slots, delta, self.n], 'int8'))
+        self.popu_slots = np.array(np.zeros([n_slots, delta, self.n], 'int8'))
+        self.delta = delta
+        self.n_slots = n_slots
+
             # TODO 分好槽的popu的f，cost； 索引一个个体的f / c：[slot_i, 个体_i, (0 / 1)]
         f_c_slots = np.array(np.zeros([n_slots, delta, 2], 'float'))
         t = 0
@@ -188,7 +191,7 @@ class SUBMINLIN(object):
                 if best_tupl == 666666666:
                     print(9 / 0)
 
-                x_best = popu_slots[best_tupl]
+                x_best = self.popu_slots[best_tupl]
                 best_f_c = f_c_slots[best_tupl]
 
                 best_record.append(best_f_c[0])
@@ -196,10 +199,10 @@ class SUBMINLIN(object):
 
                 with open(file_name+'_result.txt', 'a') as fl:
                     fl.write(str(t) + '\n')
-                    for i in range(popu_slots.shape[0]):
-                        for j in range(popu_slots.shape[1]):
+                    for i in range(self.popu_slots.shape[0]):
+                        for j in range(self.popu_slots.shape[1]):
                             # fl.write(str(popu_slots[i][j])+'\n')
-                            pos = self.Position(popu_slots[i][j])
+                            pos = self.Position(self.popu_slots[i][j])
                             for po in pos:
                                 fl.write(str(po)+'\t')
                             fl.write('\t\t\t\t\t')
@@ -209,7 +212,7 @@ class SUBMINLIN(object):
 
                     fl.write('\n')
 
-                    for i in range(popu_slots.shape[0]):
+                    for i in range(self.popu_slots.shape[0]):
                         sor = self.按某列排序(f_c_slots[i], 1)
                         fl.write(str(sor) + '\n')
                     fl.write(str(best_tupl) + '\n')
@@ -237,11 +240,11 @@ class SUBMINLIN(object):
 
             rand_ind = np.random.randint(0, len(popu_index_tuples))  # 随机选第几个x，几是相对于popSize而言的
             x_tuple = popu_index_tuples[rand_ind]
-            x = popu_slots[x_tuple]
+            x = self.popu_slots[x_tuple]
 
             rand_ind = np.random.randint(0, len(popu_index_tuples))  # 随机选第几个y，几是相对于popSize而言的
             y_tuple = popu_index_tuples[rand_ind]
-            y = popu_slots[y_tuple]
+            y = self.popu_slots[y_tuple]
 
             x_ori = np.copy(x)
             y_ori = np.copy(y)
@@ -264,25 +267,25 @@ class SUBMINLIN(object):
             ) - 1
 
             all_muts += 2
-            if (x_slot_index < 0 or x_slot_index >= len(popu_slots) or
-                    (np.any(np.all(popu_slots[x_slot_index] == x, axis=1))) or     # x 在当前slot中有孪生姐妹
-                    (y_slot_index < 0 or y_slot_index >= len(popu_slots)) or
-                    (np.any(np.all(popu_slots[y_slot_index] == y, axis=1)))
+            if (x_slot_index < 0 or x_slot_index >= len(self.popu_slots) or
+                    (np.any(np.all(self.popu_slots[x_slot_index] == x, axis=1))) or     # x 在当前slot中有孪生姐妹
+                    (y_slot_index < 0 or y_slot_index >= len(self.popu_slots)) or
+                    (np.any(np.all(self.popu_slots[y_slot_index] == y, axis=1)))
             ):
                 unsuccessful_muts += 2
                 continue
             mut_to_slots[x_slot_index] += 1
             successful_muts += 2
 
-            x_useful = self.put_into_popu_NSGA_II(x, x_slot_index, f_x, cost_x, popu_slots, f_c_slots, popu_index_tuples, delta)
-            y_useful = self.put_into_popu_NSGA_II(y, y_slot_index, f_y, cost_y, popu_slots, f_c_slots, popu_index_tuples, delta)
+            x_useful = self.put_into_popu_NSGA_II(x, x_slot_index, f_x, cost_x, self.popu_slots, f_c_slots, popu_index_tuples, delta)
+            y_useful = self.put_into_popu_NSGA_II(y, y_slot_index, f_y, cost_y, self.popu_slots, f_c_slots, popu_index_tuples, delta)
             if x_useful:
                 useful_muts += 1
             if y_useful:
                 useful_muts += 1
             # if x_useful or y_useful or 1:
-            for si in range(popu_slots.shape[0]):
-                for pi in range(popu_slots.shape[1]):
+            for si in range(self.popu_slots.shape[0]):
+                for pi in range(self.popu_slots.shape[1]):
                     if f_c_slots[si][pi][0] >= self.f_leag_best and f_c_slots[si][pi][1] <= self.Bud:
                         self.f_leag_best = f_c_slots[si][pi][0]
                         self.f_leag_best_at_tuple = (si, pi)
@@ -315,7 +318,7 @@ class SUBMINLIN(object):
             if fc_i[0] > best_f:
                 best_f = fc_i[0]
                 best_tupl = tupl
-        x_best = popu_slots[best_tupl]
+        x_best = self.popu_slots[best_tupl]
         best_f_c = f_c_slots[best_tupl]
         return x_best, best_f_c
 
@@ -428,13 +431,21 @@ class SUBMINLIN(object):
                     min_dist_pi.append(die_pi)
 
                 if min_dist_pi != []:
-                    death_pi = self.find_min_ham_pi(i_all[min_dist_pi], f_all[min_dist_pi], c_all[min_dist_pi], genes[min_dist_pi], x_slot_index)
+                    death_pi = self.find_min_ham_pi(i_all[min_dist_pi], f_all[min_dist_pi], c_all[min_dist_pi], genes[min_dist_pi], x_slot_index,
+                                                    self.popu_slots.reshape(
+                                                        self.delta * self.n_slots, self.n
+                                                    )
+                                                    )
 
             return death_pi
         else:
             # todo  总共只有一层rank=0
             # todo 尝试Hamming
-            die_pi = self.find_min_ham_pi(i_all, f_all, c_all, genes, x_slot_index)
+            die_pi = self.find_min_ham_pi(i_all, f_all, c_all, genes, x_slot_index,
+                                          self.popu_slots.reshape(
+                                              self.delta * self.n_slots, self.n
+                                          )
+                                          )
 
             # todo  尝试card
             # cards = []
@@ -457,21 +468,53 @@ class SUBMINLIN(object):
 
             return die_pi
 
-    def find_min_ham_pi(self, i_all, f_all, c_all, genes, x_slot_index):
+    def find_min_ham_pi(self, i_all, f_all, c_all, genes, x_slot_index, all_pop_gene):
         if len(i_all) == 1:
             return i_all[0]
         hams = []
         for _ in range(len(i_all)):
-            hams.append(self.Hamming_Distance(genes[_], genes))
+            # hams.append(self.Hamming_Distance(genes[_], genes))
+
+
+
+
+
+
+
+
+
+
+
+
+            hams.append(self.Hamming_Distance(genes[_], all_pop_gene))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         # todo 必保住两个端点
-        f_max = np.max(f_all)
-        c_min = np.min(c_all)
-        f_max_ids = np.where(f_all == f_max)[0]
-        c_min_ids = np.where(c_all == c_min)[0]
-        if len(c_min_ids) == 1:
-            hams[c_min_ids[0]] = np.inf
-        if len(f_max_ids) == 1:
-            hams[f_max_ids[0]] = np.inf
+        # f_max = np.max(f_all)
+        # c_min = np.min(c_all)
+        # f_max_ids = np.where(f_all == f_max)[0]
+        # c_min_ids = np.where(c_all == c_min)[0]
+        # if len(c_min_ids) == 1:
+        #     hams[c_min_ids[0]] = np.inf
+        # if len(f_max_ids) == 1:
+        #     hams[f_max_ids[0]] = np.inf
+
+
+
+
         min_ham = np.inf
         die_pi = None
         for _ in range(len(i_all)):
