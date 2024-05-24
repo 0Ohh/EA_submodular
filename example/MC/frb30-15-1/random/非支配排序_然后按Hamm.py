@@ -58,6 +58,7 @@ class SUBMINLIN(object):
         # 保证期望值
         x_ori = np.copy(s)
         nn = int(s.shape[0])
+        n = int(s.shape[0])
         cx = np.array(self.cost)
         if der == -1:
             der = (1 / nn) * nn * cx.min()
@@ -531,7 +532,7 @@ if __name__ == "__main__":
     q = 6
 
     myObject.InitDVC(n, q)  # sampleSize,n,
-    B= 8
+    B= 5.4
     n_sl = 10
     coo = np.array(myObject.cost)
 

@@ -436,7 +436,7 @@ if __name__ == "__main__":
     n_ = 450
     q_ = 6
     myObject.InitDVC(n_, q_)  # sampleSize,n,
-    B_ =7
+    B_ =3
     n_sl = 10
 
     coo = np.array(myObject.cost)

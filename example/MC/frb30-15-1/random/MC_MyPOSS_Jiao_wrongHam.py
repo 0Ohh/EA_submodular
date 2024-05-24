@@ -64,6 +64,7 @@ class SUBMINLIN(object):
         # 保证期望值
         x_ori = np.copy(s)
         nn = int(s.shape[0])
+        n = int(s.shape[0])
         cx = np.array(self.cost)
         if der == -1:
             der = (1 / nn) * nn * cx.min()
@@ -107,6 +108,15 @@ class SUBMINLIN(object):
                 # if 1:
                 return x
 
+
+    def cross_over_uniform(self, x, y):
+        return x, y
+        white = np.random.binomial(1, 0.5, x.shape[0]
+                )         # 1 0 0 1 1
+        black = 1 - white # 0 1 1 0 0
+        son =       np.multiply(x, white) + np.multiply(y, black)
+        daughter =  np.multiply(x, black) + np.multiply(y, white)
+        return daughter, son
 
 
     def cross_over_partial(self, x, y):
@@ -222,7 +232,8 @@ class SUBMINLIN(object):
 
             x_ori = np.copy(x)
 
-            x, y = self.cross_over_partial(x, y)
+            # x, y = self.cross_over_partial(x, y)
+            x, y = self.cross_over_uniform(x, y)
 
             x = self.mutation_new(x, (B-L+B+R)/2, B-L, B+R)  # x突变
             y = self.mutation_new(y, (B-L+B+R)/2, B-L, B+R)  # y突变
@@ -242,10 +253,10 @@ class SUBMINLIN(object):
             # )
 
             x_slot_index = int(
-                np.ceil((cost_x - (B - L)) / slot_wid)  # 向上取整除法
+                np.ceil((cost_x -0.00000000001  - (B - L)) / slot_wid)  # 向上取整除法
             ) - 1
             y_slot_index = int(
-                np.ceil((cost_y - (B - L)) / slot_wid)  # 向上取整除法
+                np.ceil((cost_y -0.00000000001 - (B - L)) / slot_wid)  # 向上取整除法
             ) - 1
 
             all_muts += 1
@@ -371,7 +382,7 @@ if __name__ == "__main__":
     n_ = 450
     q_ = 6
     myObject.InitDVC(n_, q_)  # sampleSize,n,
-    B_ =8
+    B_ =5.4
     n_sl = 10
 
     coo = np.array(myObject.cost)
