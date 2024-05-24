@@ -116,6 +116,8 @@ class SUBMINLIN(object):
 
     def Hamming_Distance(self, x, slot):
         return np.abs(x - slot).sum()
+        # return np.sum( np.abs(x - slot), axis=1 ).min()
+        # return (-1.0 / (np.sum( np.abs(x - slot), axis=1 ) + 0.000000001)).sum()
 
     def MyPOSS(self, B, n_slots, L, R=None, delta=5):
         if R is None: R = L
@@ -511,7 +513,6 @@ class SUBMINLIN(object):
         #     hams[c_min_ids[0]] = np.inf
         # if len(f_max_ids) == 1:
         #     hams[f_max_ids[0]] = np.inf
-
 
 
 
