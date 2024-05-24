@@ -64,27 +64,53 @@ class SUBMINLIN(object):
         change = np.random.binomial(1, rand_rate, self.n)
         return np.abs(s - change)
 
-    def mutation_new(self, s, Bu, pm=-1):
+
+    def mutation_new(self, s, Tar, l_bound, r_bound, der=-1):
         # 保证期望值
-        nn = int(s.shape[1])
+        x_ori = np.copy(s)
+        nn = int(s.shape[0])
         cx = np.array(self.cost)
-        if pm == -1:
-            pm = 1 / nn
+        if der == -1:
+            der = (1 / nn) * nn * cx.min()
         a = np.dot(cx, (1 - s))
         b = np.dot(cx, s)
-        c = (1 - s).sum()
-        d = s.sum()
-        B_b = Bu - b
-        p0 = (a*(abs(B_b) + pm) - c * B_b) / (c*b + a*d)
-        p1 = (b*(abs(B_b) + pm) + d * B_b) / (c*b + a*d)
 
-        change1_to_0 = np.random.binomial(1, 1 - p1, nn)
-        s = np.multiply(s, change1_to_0)
+        if b == 0:  # 全0 gene
+            s[np.random.randint(0, nn)] = 1
+            a = np.dot(cx, (1 - s))
+            b = np.dot(cx, s)
+        if a == 0:  # 全1 gene
+            s[np.random.randint(0, nn)] = 0
+            a = np.dot(cx, (1 - s))
+            b = np.dot(cx, s)
 
-        change0_to_1 = np.random.binomial(1, 1 - p0, nn)
-        mul = np.multiply(1 - s, change0_to_1)
-        s = 1 - mul
-        return s
+        B_b = Tar - b
+        p0 = (abs(B_b) + der + B_b) / (2 * a)
+        p1 = (abs(B_b) + der - B_b) / (2 * b)
+        if p0 > 1.0:
+            if mut_print[0]:
+                print('fuck p0', p0)
+            p0 = 1.0
+        if p1 > 1.0:
+            if mut_print[0]:
+                print('fuck p1', p1)
+            p1 = 1.0
+        while 1:
+            x = np.copy(x_ori)
+            change1_to_0 = np.random.binomial(1, p1, n)
+            change1_to_0 = np.multiply(x, change1_to_0)
+            change1_to_0 = 1 - change1_to_0
+            x = np.multiply(x, change1_to_0)
+
+            change0_to_1 = np.random.binomial(1, p0, n)
+            change0_to_1 = np.multiply(1 - x_ori, change0_to_1)
+
+            x += change0_to_1
+
+            if l_bound < self.CS(x) < r_bound and (x != x_ori).any():
+                # if r_bound and (s != s_ori).any():
+                # if 1:
+                return x
 
 
     def MyPOSS(self, B, n_slots, L, R=None, delta=5):

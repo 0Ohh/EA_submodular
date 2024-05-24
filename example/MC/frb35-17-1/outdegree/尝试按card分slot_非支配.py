@@ -64,16 +64,45 @@ class SUBMINLIN(object):
         p1 = (np.abs(k_x) - k_x + pm * n) / (2*cardx)
         while 1:
             x = np.copy(x_ori)
+            change1_to_0 = np.random.binomial(1, p1, n)
+            change1_to_0 = np.multiply(x, change1_to_0)
+            change1_to_0 = 1 - change1_to_0
+            x = np.multiply(x, change1_to_0)
 
+            change0_to_1 = np.random.binomial(1, p0, n)
+            change0_to_1 = np.multiply(1-x_ori, change0_to_1)
 
+            x += change0_to_1
+            if l_b < self.CS(x) < r_b and (x != x_ori).any():
+            # if r_bound and (s != s_ori).any():
+            # if 1:
+                return x
 
 
     def mutation_new(self, s, Tar, l_bound, r_bound, der=-1):
         # 保证期望值
-        s_ori = s
+        x_ori = np.copy(s)
         nn = int(s.shape[0])
         cx = np.array(self.cost)
         if der == -1:
+            der = (1 / nn) * nn * cx.min()
+            der = (1 / nn) * nn * cx.min()
+            der = (1 / nn) * nn * cx.min()
+            der = (1 / nn) * nn * cx.min()
+            der = (1 / nn) * nn * cx.min()
+            der = (1 / nn) * nn * cx.min()
+            der = (1 / nn) * nn * cx.min()
+            der = (1 / nn) * nn * cx.min()
+            der = (1 / nn) * nn * cx.min()
+            der = (1 / nn) * nn * cx.min()
+            der = (1 / nn) * nn * cx.min()
+            der = (1 / nn) * nn * cx.min()
+            der = (1 / nn) * nn * cx.min()
+            der = (1 / nn) * nn * cx.min()
+            der = (1 / nn) * nn * cx.min()
+            der = (1 / nn) * nn * cx.min()
+            der = (1 / nn) * nn * cx.min()
+            der = (1 / nn) * nn * cx.min()
             der = (1 / nn) * nn * cx.min()
         a = np.dot(cx, (1 - s))
         b = np.dot(cx, s)
@@ -99,18 +128,21 @@ class SUBMINLIN(object):
                 print('fuck p1', p1)
             p1 = 1.0
         while 1:
-            s = np.copy(s_ori)
-            change1_to_0 = np.random.binomial(1, 1 - p1, nn)
-            s1_0 = np.multiply(s, change1_to_0)
+            x = np.copy(x_ori)
+            change1_to_0 = np.random.binomial(1, p1, n)
+            change1_to_0 = np.multiply(x, change1_to_0)
+            change1_to_0 = 1 - change1_to_0
+            x = np.multiply(x, change1_to_0)
 
+            change0_to_1 = np.random.binomial(1, p0, n)
+            change0_to_1 = np.multiply(1 - x_ori, change0_to_1)
 
-            change0_to_1 = np.random.binomial(1, 1 - p0, nn)
-            mul = np.multiply(1 - s, change0_to_1)
-            s = 1 - mul
-            if l_bound < self.CS(s) < r_bound and (s != s_ori).any():
+            x += change0_to_1
+
+            if l_bound < self.CS(x) < r_bound and (x != x_ori).any():
             # if r_bound and (s != s_ori).any():
             # if 1:
-                return s
+                return x
 
 
     def cross_over_uniform(self, x, y):

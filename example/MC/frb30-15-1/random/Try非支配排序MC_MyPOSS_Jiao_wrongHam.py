@@ -60,9 +60,11 @@ class SUBMINLIN(object):
             tempSum += self.cost[item]
         return tempSum
 
+
+
     def mutation_new(self, s, Tar, l_bound, r_bound, der=-1):
         # 保证期望值
-        s_ori = s
+        x_ori = np.copy(s)
         nn = int(s.shape[0])
         cx = np.array(self.cost)
         if der == -1:
@@ -80,8 +82,8 @@ class SUBMINLIN(object):
             b = np.dot(cx, s)
 
         B_b = Tar - b
-        p0 = (abs(B_b) + der + B_b) / (2*a)
-        p1 = (abs(B_b) + der - B_b) / (2*b)
+        p0 = (abs(B_b) + der + B_b) / (2 * a)
+        p1 = (abs(B_b) + der - B_b) / (2 * b)
         if p0 > 1.0:
             if mut_print[0]:
                 print('fuck p0', p0)
@@ -91,16 +93,23 @@ class SUBMINLIN(object):
                 print('fuck p1', p1)
             p1 = 1.0
         while 1:
-            s = s_ori
-            change1_to_0 = np.random.binomial(1, 1 - p1, nn)
-            s = np.multiply(s, change1_to_0)
-            change0_to_1 = np.random.binomial(1, 1 - p0, nn)
-            mul = np.multiply(1 - s, change0_to_1)
-            s = 1 - mul
-            if l_bound < self.CS(s) < r_bound and (s != s_ori).any():
-            # if r_bound and (s != s_ori).any():
-            # if 1:
-                return s
+            x = np.copy(x_ori)
+            change1_to_0 = np.random.binomial(1, p1, n)
+            change1_to_0 = np.multiply(x, change1_to_0)
+            change1_to_0 = 1 - change1_to_0
+            x = np.multiply(x, change1_to_0)
+
+            change0_to_1 = np.random.binomial(1, p0, n)
+            change0_to_1 = np.multiply(1 - x_ori, change0_to_1)
+
+            x += change0_to_1
+
+            if l_bound < self.CS(x) < r_bound and (x != x_ori).any():
+                # if r_bound and (s != s_ori).any():
+                # if 1:
+                return x
+
+
 
     def cross_over_partial(self, x, y):
 
