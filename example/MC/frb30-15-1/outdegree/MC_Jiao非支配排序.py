@@ -416,9 +416,6 @@ class SUBMINLIN(object):
             return False
         else:
             self.PUT_x_at(PUT_info, death_pi)
-
-
-
             return True
 
     def select_die_pi(self, i_all, f_all, c_all, genes, x_slot_index):

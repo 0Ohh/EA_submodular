@@ -11,17 +11,16 @@ class SUBMINLIN(object):
     def __init__(self, data):
         self.data = data
 
-    def InitDVC(self, n, q):
+    def InitDVC(self, n):
         self.n = n
         self.cost = [0] * self.n
         for i in range(self.n):
             tempElemetn = [i]
             tempElemetn.extend(self.data[i])
-            tempValue = len(list(set(tempElemetn))) - q
-            if tempValue > 0:
-                self.cost[i] = tempValue
-            else:
-                self.cost[i] = 1
+            print(tempElemetn)
+            tempValue = len(list(set(tempElemetn)))
+            self.cost[i] = tempValue
+
 
     def Position(self, s):
         return np.array(np.where(s[0, :] == 1)[1]).reshape(-1)
@@ -337,8 +336,8 @@ if __name__ == "__main__":
 
     myObject = SUBMINLIN(data)
     n =450
-    q = 6
 
-    myObject.InitDVC(n, q)  # sampleSize,n,
-    B=400
-    myObject.EAMC(B)
+    myObject.InitDVC(n)  # sampleSize,n,
+    # B=400
+    # myObject.EAMC(B)
+    print(myObject.cost)

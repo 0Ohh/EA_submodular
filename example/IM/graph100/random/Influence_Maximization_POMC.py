@@ -121,7 +121,7 @@ class ObjectiveIM(object):
         iter = 0
         # T=int(ceil((n+self.constraint)*k*k*exp(1)*exp(1)))
         T = int(ceil(self.n * self.n * 20))
-        kn = int(self.n * self.n)
+        kn = 5000
         while t < T:
             if iter == kn:
                 iter = 0
@@ -132,7 +132,7 @@ class ObjectiveIM(object):
                         maxValue = fitness[p, 0]
                         resultIndex = p
                 tempValue=self.EstimateObjective_accurate(population[resultIndex,:])
-                print(tempValue,fitness[resultIndex,1], popSize)
+                print(t, tempValue,fitness[resultIndex,1], popSize)
             iter += 1
             s = population[randint(1, popSize) - 1, :]  # choose a individual from population randomly
             offSpring = self.mutation(s)  # every bit will be flipped with probability 1/n
