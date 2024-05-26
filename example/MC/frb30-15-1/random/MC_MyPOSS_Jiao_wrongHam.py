@@ -382,9 +382,9 @@ if __name__ == "__main__":
     n_ = 450
     q_ = 6
     myObject.InitDVC(n_, q_)  # sampleSize,n,
-    B_ =5.4
+    B_ = 7
     n_sl = 10
 
     coo = np.array(myObject.cost)
 
-    myObject.MyPOSS(B_, n_sl, coo.max(), coo.max(), delta=5)
+    myObject.MyPOSS(B_, n_sl, coo.max(), coo.max(), delta=10)

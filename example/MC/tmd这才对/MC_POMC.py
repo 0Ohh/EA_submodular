@@ -169,5 +169,5 @@ if __name__ == "__main__":
 
     myObject = SUBMINLIN()
 
-    B= 28000
+    B= 25000
     print(myObject.POMC(B))

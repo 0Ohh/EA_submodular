@@ -1,7 +1,7 @@
 import numpy as np
 
 graph = np.zeros([450, 450], dtype='int')
-with open('frb30-15-1.mis', 'r') as f:
+with open('原版frb30-15-1.mis', 'r') as f:
     lines = f.readlines()
     for l in lines:
         a, b = l.split(' ')
@@ -19,6 +19,9 @@ def Cqua(x):
 
 def C1(x):
     return np.dot(x, degrees+1).sum()
+
+def Card(x):
+    return x.sum()
 
 def F(x):
     m = np.multiply(x, graph)

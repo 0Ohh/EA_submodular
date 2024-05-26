@@ -28,11 +28,11 @@ class SUBMINLIN(object):
         return coverage.F(s)
 
     def CS(self, s):
+        # return coverage.Card(s)
         return coverage.Cqua(s)
 
     def mutation_new(self, s, Tar, l_bound, r_bound, der=-1, prit=True):
         # 保证期望值
-
 
         # 设置Tar为：输入Tar（大概是B）与当前cost的平均值 -> 变化不大，时好时坏，但好像是会好一点
         # Tar = (self.CS(s) + Tar) / 2
@@ -93,7 +93,7 @@ class SUBMINLIN(object):
                 if prit:
                     print('太小了')
 
-            if l_bound < self.CS(x) < r_bound and (x != x_ori).any():
+            if l_bound <= self.CS(x) <= r_bound and (x != x_ori).any():
             # if (x != x_ori).any():
                 # if 1:
                 return x
@@ -139,6 +139,7 @@ class SUBMINLIN(object):
         bei = L // wd
         wd = L / bei
         R = wd * n_slots - L
+        slot_wid = (L + R) / n_slots
 
         # c = np.array(self.cost)
         # c = np.sort(c)
@@ -152,16 +153,50 @@ class SUBMINLIN(object):
         print(B)
         print(B-L, B, B+R)
 
+        inital = np.zeros(self.n, 'int')
+        init_c = 0.0
+        ci = np.array([_ for _ in range(len(self.cost))])
+        ic = np.vstack((ci, self.cost))
+        ic = ic[:, np.argsort(ic[1, :])]
+        for i in range(self.n - 1, -1, -1):
+            cur_cost = ic[1, i]
+            if init_c + cur_cost <= B:
+                # add 1s on place ic[0, i]
+                inital[ic[0, i]] = 1
+                init_c += cur_cost
+        print(inital, init_c, 'initntintintinininintinininitnininini')
+        init_sl_i = int(
+                np.ceil((init_c - (B - L)) / slot_wid)  # 向上取整除法
+            ) - 1
+
+
         self.global_sum = np.zeros(self.n, 'int')
+        # self.global_sum = np.copy(inital)
         self.popu_index_tuples = [(0, 0)]  # TODO 一个list[tuples]，整个popu的每个个体对应popu_slots中的index(slot_i, 个体_i)
-                                # TODO 这个列表只会append，不会删东西
+        # self.popu_index_tuples = [(init_sl_i, 0)]  # TODO 一个list[tuples]，整个popu的每个个体对应popu_slots中的index(slot_i, 个体_i)
+
+
+        # self.popu_index_tuples = []
+        # for i in range(n_slots):
+        #     for j in range(delta):
+        #         self.popu_index_tuples.append((i, j))
+
+
         # popSize = 1
         # TODO 分好槽的popu，索引一个个体：[slot_i, 个体_i, :]
         popu_slots = np.array(np.zeros([n_slots, delta, self.n], 'int8'))
+
+        # popu_slots[init_sl_i, 0] = inital
+
+
         # TODO 分好槽的popu的f，cost； 索引一个个体的f / c：[slot_i, 个体_i, (0 / 1)]
         f_c_slots = np.array(np.zeros([n_slots, delta, 2], 'float'))
+        # f_c_slots[init_sl_i, 0, 0] = self.FS(inital)
+        # f_c_slots[init_sl_i, 0, 1] = self.CS(inital)
+
+
         ham_slots = np.array(np.zeros([n_slots, delta, 1], 'float'))
-        slot_wid = (L + R) / n_slots
+
 
         print('..............', wd, slot_wid, L, R)
 
@@ -345,6 +380,11 @@ class SUBMINLIN(object):
         worst_f = np.inf
         worst_cost = -1.0
         x_is_added = False
+
+        for p in range(0, delta):  # p-> (0~5)
+            if (popu_slots[x_slot_index, p] == x).all():
+                return
+
         for p in range(0, delta):  # p-> (0~5)
             if f_c_slots[x_slot_index, p, 1] == 0:  # (第p个)某旧个体cost==0，即全0gene,说明槽未满
                 # 直接把x放进这里
@@ -454,7 +494,7 @@ if __name__ == "__main__":
 
     myObject = SUBMINLIN()
 
-    B = 28000
+    B = 25000
     n_sl = 30
     coo = np.array(myObject.cost)
 

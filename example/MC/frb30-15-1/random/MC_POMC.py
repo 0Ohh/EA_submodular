@@ -211,5 +211,5 @@ if __name__ == "__main__":
     n = 450
     q = 6
     myObject.InitDVC(n, q)  # sampleSize,n,
-    B= 5.4
+    B= 7
     myObject.POMC(B)

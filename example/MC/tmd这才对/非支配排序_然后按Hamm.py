@@ -6,6 +6,7 @@ from random import sample
 from random import randint, random
 from math import pow, log, ceil, fabs, exp
 import matplotlib.pyplot as plt
+import coverage
 
 mut_print = [True]
 
@@ -15,41 +16,18 @@ def setMuPT():
 
 
 class SUBMINLIN(object):
-    def __init__(self, data):
-        self.data = data
-
-    def InitDVC(self, n, q):
-        self.n = n
-        self.cost = [0] * self.n
-        for i in range(self.n):
-            tempElemetn = [i]
-            tempElemetn.extend(self.data[i])
-            tempValue = len(list(set(tempElemetn))) - q
-            if tempValue > 0:
-                self.cost[i] = tempValue
-            else:
-                self.cost[i] = 1
-            self.cost[i] += (np.random.rand() * 100)
+    def __init__(self):
+        self.n = 450
+        self.cost = coverage.quadra_costs
 
     def Position(self, s):
         return np.where(s == 1)[0]
 
     def FS(self, s):
-        pos = self.Position(s)
-        tempSet = []
-        for j in pos:
-            tempSet.extend(self.data[j])
-        tempSet.extend(pos)
-        tempSet = list(set(tempSet))
-        tempSum = len(tempSet)
-        return tempSum
+        return coverage.F(s)
 
     def CS(self, s):
-        pos = self.Position(s)
-        tempSum = 0.0
-        for item in pos:
-            tempSum += self.cost[item]
-        return tempSum
+        return coverage.Cqua(s)
 
 
     def mutation_new(self, s, Tar, l_bound, r_bound, der=-1):
@@ -442,17 +420,12 @@ def GetDVCData(fileName):# node number start from 0
 
 
 if __name__ == "__main__":
-
-    # read data and normalize it
-    data = GetDVCData('./../frb30-15-1.mis')
-
-    myObject = SUBMINLIN(data)
     n =450
-    q = 6
 
-    myObject.InitDVC(n, q)  # sampleSize,n,
-    B= 800
-    n_sl = 10
+    myObject = SUBMINLIN()
+
+    B = 25000
+    n_sl = 30
     coo = np.array(myObject.cost)
 
     # myObject.MyPOSS(B, n_sl, 16, 16, delta=5)
