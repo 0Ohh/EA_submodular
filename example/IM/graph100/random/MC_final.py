@@ -1,7 +1,7 @@
 import os
 import sys
 import time
-
+import datetime
 import numpy as np
 from random import sample
 from random import randint, random
@@ -15,53 +15,68 @@ def setMuPT():
 
 
 
-class SUBMINLIN(object):
-    def __init__(self, data):
-        self.data = data
-
-    def InitDVC(self, n, q):
-        self.n = n
-        self.cost = [0] * self.n
-
-        ###read cost
-        file1=open('cost.txt')
-        line=file1.readline()
-        items=line.split()
-        print
-        ########
+class ObjectiveIM(object):
+    def __init__(self, weightMatrix,nodeNum):
+        self.weightMatrix = weightMatrix
+        self.n=nodeNum
+        self.solution = []
+        self.allNodes=np.ones((1, self.n))
+        self.cost=[0]*self.n
+        dataFile=open('graph100_rand_cost.txt')
+        dataLine=dataFile.readlines()
+        items=dataLine[0].split()
         for i in range(self.n):
-            self.cost[i]=float(items[i])
+            tempValue=float(items[i])
+            if tempValue>0:
+                self.cost[i]=tempValue
         self.cost = np.array(self.cost)
-        #print(self.cost)
-        '''
-        tempElemetn = [i]
-        tempElemetn.extend(self.data[i])
-        tempValue = len(list(set(tempElemetn))) - q
-        if tempValue > 0:
-            self.cost[i] = tempValue
-        else:
-            self.cost[i] = 1
-        '''
+        dataFile.close()
+        #print('size of node is %d' % (self.n))
+
+
+
+    def FinalActiveNodes(self):  # solution is the numpy matrix 1*n
+        activeNodes = np.zeros((1, self.n)) + self.solution
+        cActive = np.zeros((1, self.n)) + self.solution# currently active nodes
+        tempNum = int(cActive.sum(axis=1)[0, 0])
+        while tempNum > 0:
+            nActive = self.allNodes - activeNodes
+            randMatirx = np.random.rand(tempNum, self.n)#uniformly random matrix between 0 and 1
+            z = sum(randMatirx < self.weightMatrix[cActive.nonzero()[-1], :]) > 0 #cActive.nonzero()[-1] is the nonzero index
+            cActive = np.multiply(nActive, z) #sum is the sum of each column,the new active node
+            activeNodes = (cActive + activeNodes) > 0
+            tempNum = int(cActive.sum(axis=1)[0, 0])
+        return activeNodes.sum(axis=1)[0, 0]
+
+
+
+    def EstimateObjective_accurate(self, solution):  # simulate 10000 times
+        temp = np.mat(solution)
+        self.solution = temp
+        val = 0
+        for i in range(10000):
+            val += self.FinalActiveNodes()
+        return val / 10000.0
 
     def Position(self, s):
         return np.where(s == 1)[0]
 
-    def FS(self, s):
-        pos = self.Position(s)
-        tempSet = []
-        for j in pos:
-            tempSet.extend(self.data[j])
-        tempSet.extend(pos)
-        tempSet = list(set(tempSet))
-        tempSum = len(tempSet)
+    def FS(self, solution):  # simulate 50 times
+        temp = np.mat(solution)
+        self.solution = temp
+        val = 0
+        for i in range(100):
+            val += self.FinalActiveNodes()
+        return val / 100.0
+
+    def CS(self,s):
+        tempSum=0
+        pos=self.Position(s)
+        for item in pos:
+            tempSum=tempSum+self.cost[item]
         return tempSum
 
-    def CS(self, s):
-        pos = self.Position(s)
-        tempSum = 0.0
-        for item in pos:
-            tempSum += self.cost[item]
-        return tempSum
+
 
     def mutation_new(self, s, Tar, l_bound, r_bound, der=-1, prit=True):
         # 保证期望值
@@ -234,8 +249,8 @@ class SUBMINLIN(object):
         print('..............', wd, slot_wid, L, R)
 
         t = 0
-        T = int(ceil(self.n * self.n * 100))
-        print_tn = 10000
+        T = int(ceil(self.n * self.n * 20))
+        print_tn = 2000
         time0 = time.time()
 
         all_muts = 0
@@ -245,10 +260,11 @@ class SUBMINLIN(object):
         unsuccessful_muts = 0
 
         file_name = str(os.path.basename(__file__))
-        with open(file_name + '_result.txt', 'w') as fl:
-            fl.write('')
-            fl.flush()
-            fl.close()
+        # with open(file_name + '_result.txt', 'w') as fl:
+        #     fl.write('')
+        #     fl.flush()
+        #     fl.close()
+
         pm = 1.0 * self.cost.min()
 
         while t < T:
@@ -276,22 +292,23 @@ class SUBMINLIN(object):
 
                 with open(file_name+'_result.txt', 'a') as fl:
                     fl.write(str(t) + '\n')
-                    for i in range(popu_slots.shape[0]):
-                        for j in range(popu_slots.shape[1]):
-                            # fl.write(str(popu_slots[i][j])+'\n')
-                            pos = self.Position(popu_slots[i][j])
-                            for po in pos:
-                                fl.write(str(po)+'\t')
-                            fl.write('\t\t\t\t\t')
-                            fl.write(str(len(pos))+'\t')
-                            fl.write(str(ham_slots[i][j])+'\t')
-                            fl.write('\n')
-                        fl.write('\n')
+                    # for i in range(popu_slots.shape[0]):
+                    #     for j in range(popu_slots.shape[1]):
+                    #         # fl.write(str(popu_slots[i][j])+'\n')
+                    #         # pos = self.Position(popu_slots[i][j])
+                    #         # for po in pos:
+                    #             # fl.write(str(po)+'\t')
+                    #         # fl.write('\t\t\t\t\t')
+                    #         # fl.write(str(len(pos))+'\t')
+                    #         # fl.write(str(ham_slots[i][j])+'\t')
+                    #         # fl.write('\n')
+                    #     fl.write('\n')
 
-                    fl.write('\n')
-                    fl.write(str(f_c_slots) + '\n')
-                    fl.write(str(best_tupl) + '\n')
-                    fl.write('\n')
+                    # fl.write('\n')
+                    # fl.write(str(f_c_slots) + '\n')
+                    # fl.write(str(best_tupl) + '\n')
+                    fl.write(str(best_f_c) + '\n')
+                    # fl.write('\n')
                     fl.flush()
                     fl.close()
 
@@ -303,12 +320,12 @@ class SUBMINLIN(object):
 
                 mut_to_slots = np.array(np.zeros(n_slots, 'int'))
                 successful_muts, all_muts, mutation_dists_sum, unsuccessful_muts = 0, 0, 0, 0
-                if t > 5*print_tn:
-                    setMuPT()
+                # if t > 5*print_tn:
+                #     setMuPT()
 
                 if t % (10*print_tn) == 0:
                     print(f_c_slots)
-                    print(self.global_sum, '------------> global sum')
+                    # print(self.global_sum, '------------> global sum')
                     # print(ham_slots)
                 #     crit = popu_slots[4]
                 #     for p in crit:
@@ -334,12 +351,12 @@ class SUBMINLIN(object):
             # x, y = self.cross_over_uniform(x, y)
 
 
-            if t % 2_0000 == 0:
-                # todo 自适应增大突变率？？？？？？？？？？？？？
-                if len(best_record) > 2:
-                    if best_record[-1] == best_record[-2]:
-                        print(t, ' kakakakakakakaaaaaaaaaaaaa', pm)
-                        pm *= (1 + 0.05)
+            # if t % 2_0000 == 0:
+            #     # todo 自适应增大突变率？？？？？？？？？？？？？
+            #     if len(best_record) > 2:
+            #         if best_record[-1] == best_record[-2]:
+            #             print(t, ' kakakakakakakaaaaaaaaaaaaa', pm)
+            #             pm *= (1 + 0.05)
                         # pm = pm
 
             printi = False
@@ -390,18 +407,18 @@ class SUBMINLIN(object):
 
         # end While
         # 输出答案
-        best_f = -np.inf
-        best_tupl = 666666666
-        for tupl in self.popu_index_tuples:
-            fc_i = f_c_slots[tupl]
-            if fc_i[1] > B:
-                continue
-            if fc_i[0] > best_f:
-                best_f = fc_i[0]
-                best_tupl = tupl
-        x_best = popu_slots[best_tupl]
-        best_f_c = f_c_slots[best_tupl]
-        return x_best, best_f_c
+        # best_f = -np.inf
+        # best_tupl = 666666666
+        # for tupl in self.popu_index_tuples:
+        #     fc_i = f_c_slots[tupl]
+        #     if fc_i[1] > B:
+        #         continue
+        #     if fc_i[0] > best_f:
+        #         best_f = fc_i[0]
+        #         best_tupl = tupl
+        # x_best = popu_slots[best_tupl]
+        # best_f_c = f_c_slots[best_tupl]
+        # return x_best, best_f_c
 
 
     def popSize(self):
@@ -515,34 +532,52 @@ class SUBMINLIN(object):
             # f_c_slots[x_slot_index, wowo_pi, 1] = cost_x
 
 
-
-def GetDVCData(fileName):# node number start from 0
-    node_neighbor = []
-    i = 0
-    file = open(fileName)
-    lines = file.readlines()
-    while i < 450:
-        currentLine = []
-        for line in lines:
-            items = line.split()
-            if int(items[0]) == int(i+1):
-                currentLine.append(int(int(items[1])-1))
-        node_neighbor.append(currentLine)
-        i += 1
-    file.close()
-    return node_neighbor
+def ReadData(p,filePath):
+    dataFile=open(filePath)
+    maxNode=0
+    while True:
+        line=dataFile.readline()
+        if not line:
+            break
+        items=line.split()
+        if len(items)>0:
+            start=int(items[0])
+            end=int(items[1])
+            if start>maxNode:
+                maxNode=start
+            if end>maxNode:
+                maxNode=end
+    dataFile.close()
+    maxNode=maxNode
+    print(maxNode)
+    data = np.mat(np.zeros([maxNode, maxNode]))
+    dataFile = open(filePath)
+    while True:
+        line = dataFile.readline()
+        if not line:
+            break
+        items = line.split()
+        if len(items)>0:
+            data[int(items[0])-1,int(items[1])-1]=p
+    dataFile.close()
+    return data
 
 
 if __name__ == "__main__":
-    # read data and normalize it
-    data = GetDVCData('./../frb30-15-1.mis')
-    myObject = SUBMINLIN(data)
-    n_ = 450
-    q_ = 6
-    myObject.InitDVC(n_, q_)  # sampleSize,n,
-    B_ = 7
-    n_sl = 10
 
-    coo = np.array(myObject.cost)
+    for pp in range(20):
 
-    myObject.MyPOSS(B_, n_sl, coo.mean(), coo.mean(), delta=10)
+        p=0.05
+        filePath='graph100-01.txt'
+        B=3
+        weightMatrix=ReadData(p,filePath)
+        nodeNum=np.shape(weightMatrix)[0]
+        myObject=ObjectiveIM(weightMatrix,nodeNum)
+        B_ = 3
+        n_sl = 10
+
+        coo = np.array(myObject.cost)
+
+        myObject.MyPOSS(B_, n_sl, coo.mean(), coo.mean(), delta=10)
+
+

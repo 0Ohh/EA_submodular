@@ -64,50 +64,6 @@ class ObjectiveIM(object):
         return tempSum
 
 
-    def Greedy(self, B):
-        self.result = np.mat(np.zeros((1, self.n)), 'int8')
-        V_pi = [1] * self.n
-        selectedIndex = 0
-        while sum(V_pi) > 0:
-            # print(sum(V_pi))
-            f = self.FS(self.result)
-            c = self.CS(self.result)
-            maxVolume = -1
-            for j in range(0, self.n):
-                if V_pi[j] == 1:
-                    self.result[0, j] = 1
-                    fv = self.FS(self.result)
-                    cv = self.CS(self.result)
-                    # cv=self.CS(self.result)
-                    tempVolume = 1.0 * (fv - f) / (cv - c)
-                    if tempVolume > maxVolume:
-                        maxVolume = tempVolume
-                        selectedIndex = j
-                    self.result[0, j] = 0
-            self.result[0, selectedIndex] = 1
-            if self.CS(self.result) > B:
-                self.result[0, selectedIndex] = 0
-            V_pi[selectedIndex] = 0
-
-        tempMax = 0.
-        tempresult = np.mat(np.zeros((1, self.n)), 'int8')
-        selectedSigleton=0
-        for i in range(self.n):
-            if self.cost[i] <= B:
-                tempresult[0, i] = 1
-                tempVolume = self.FS(tempresult)
-                if tempVolume > tempMax:
-                    tempMax = tempVolume
-                    selectedSigleton=i
-                tempresult[0, i] = 0
-        tempresult[0,selectedSigleton]=1
-        tempmax1 = self.EstimateObjective_accurate(self.result)
-        tempMax=self.EstimateObjective_accurate(tempresult)
-        if tempmax1 > tempMax:
-            return tempmax1
-        else:
-            return tempMax
-
     def mutation(self, s):
         rand_rate = 1.0 / (self.n)  # the dummy items are considered
         change = np.random.binomial(1, rand_rate, self.n)
@@ -121,7 +77,7 @@ class ObjectiveIM(object):
         iter = 0
         # T=int(ceil((n+self.constraint)*k*k*exp(1)*exp(1)))
         T = int(ceil(self.n * self.n * 20))
-        kn = 5000
+        kn = 2000
         while t < T:
             if iter == kn:
                 iter = 0
@@ -176,111 +132,7 @@ class ObjectiveIM(object):
         else:
             return 0
 
-    def EAMC(self, B):  ##just consider cost is less B
-        X = np.mat(np.zeros([self.n + 1, self.n], 'int8'))  # initiate the population
-        Y = np.mat(np.zeros([self.n + 1, self.n], 'int8'))  # initiate the population
-        Z = np.mat(np.zeros([self.n + 1, self.n], 'int8'))  # initiate the population
-        W = np.mat(np.zeros([self.n + 1, self.n], 'int8'))  # initiate the population
-        population = np.mat(np.zeros([1, self.n], 'int8'))
-        Xfitness = np.mat(np.zeros([self.n + 1, 4]))  # f(s), c(s),|s|,g(s)
-        Yfitness = np.mat(np.zeros([self.n + 1, 4]))  # f(s), c(s),|s|,g(s)
-        Zfitness = np.mat(np.zeros([self.n + 1, 4]))  # f(s), c(s),|s|,g(s)
-        Wfitness = np.mat(np.zeros([self.n + 1, 4]))  # f(s), c(s),|s|,g(s)
-        Wfitness[:, 1] = float("inf")
-        offSpringFit = np.mat(np.zeros([1, 4]))  # f(s),c(s),|s|,g(s)
-        xysame = [0] * (self.n + 1)
-        zwsame = [0] * (self.n + 1)
-        xysame[0] = 1
-        zwsame[0] = 1
-        popSize = 1
-        t = 0  # the current iterate count
-        iter1 = 0
-        T = int(ceil(self.n * self.n * 20))
-        kn = int(self.n * self.n)
-        while t < T:
-            if iter1 == kn:
-                iter1 = 0
-                resultIndex = -1
-                maxValue = float("-inf")
-                for p in range(0, self.n + 1):
-                    if Yfitness[p, 1] <= B and Yfitness[p, 0] > maxValue:
-                        maxValue = Yfitness[p, 0]
-                        resultIndex = p
-                tempValue = self.EstimateObjective_accurate(Y[resultIndex, :])
-                print(tempValue,Yfitness[resultIndex, :], popSize)
-            iter1 += 1
-            s = population[randint(1, popSize) - 1, :]  # choose a individual from population randomly
-            offSpring = self.mutation(s)  # every bit will be flipped with probability 1/n
-            offSpringFit[0, 1] = self.CS(offSpring)
-            offSpringFit[0, 0] = self.FS(offSpring)
-            offSpringFit[0, 2] = offSpring[0, :].sum()
-            offSpringFit[0, 3] = self.GS(B, 1.0, offSpringFit)
-            indice = int(offSpringFit[0, 2])
-            if offSpringFit[0, 2] < 1:
-                t = t + 1
-                continue
-            isadd1 = 0
-            isadd2 = 0
-            if offSpringFit[0, 1] <= B:
-                if offSpringFit[0, 3] >= Xfitness[indice, 3]:
-                    X[indice, :] = offSpring
-                    Xfitness[indice, :] = offSpringFit
-                    isadd1 = 1
-                if offSpringFit[0, 0] >= Yfitness[indice, 0]:
-                    Y[indice, :] = offSpring
-                    Yfitness[indice, :] = offSpringFit
-                    isadd2 = 1
-                if isadd1 + isadd2 == 2:
-                    xysame[indice] = 1
-                else:
-                    if isadd1 + isadd2 == 1:
-                        xysame[indice] = 0
-            # count the population size
-            tempSize = 1  # 0^n is always in population
-            for i in range(1, self.n + 1):
-                if Xfitness[i, 2] > 0:
-                    if Yfitness[i, 2] > 0 and xysame[i] == 1:  # np.linalg.norm(X[i,:]-Y[i,:])==0: #same
-                        tempSize = tempSize + 1
-                    if Yfitness[i, 2] > 0 and xysame[i] == 0:  # np.linalg.norm(X[i,:]-Y[i,:])>0:
-                        tempSize = tempSize + 2
-                    if Yfitness[i, 2] == 0:
-                        tempSize = tempSize + 1
-                else:
-                    if Yfitness[i, 2] > 0:
-                        tempSize = tempSize + 1
-            if popSize != tempSize:
-                population = np.mat(np.zeros([tempSize, self.n], 'int8'))
-            popSize = tempSize
-            j = 1
-            # merge the X,Y,Z,W
-            for i in range(1, self.n + 1):
-                if Xfitness[i, 2] > 0:
-                    if Yfitness[i, 2] > 0 and xysame[i] == 1:
-                        # if Yfitness[i, 2] > 0 and np.linalg.norm(X[i, :] - Y[i, :]) == 0:  # same
-                        population[j, :] = X[i, :]
-                        j = j + 1
-                    if Yfitness[i, 2] > 0 and xysame[i] == 0:
-                        # if Yfitness[i, 2] > 0 and np.linalg.norm(X[i, :] - Y[i, :]) > 0:
-                        population[j, :] = X[i, :]
-                        j = j + 1
-                        population[j, :] = Y[i, :]
-                        j = j + 1
-                    if Yfitness[i, 2] == 0:
-                        population[j, :] = X[i, :]
-                        j = j + 1
-                else:
-                    if Yfitness[i, 2] > 0:
-                        population[j, :] = Y[i, :]
-                        j = j + 1
-            t = t + 1
-        resultIndex = -1
-        maxValue = float("-inf")
-        for p in range(0, self.n + 1):
-            if Yfitness[p, 1] <= B and Yfitness[p, 0] > maxValue:
-                maxValue = Yfitness[p, 0]
-                resultIndex = p
-        tempValue = self.EstimateObjective_accurate(Y[resultIndex, :])
-        print(tempValue)
+
 
 def ReadData(p,filePath):
     dataFile=open(filePath)
@@ -314,12 +166,13 @@ def ReadData(p,filePath):
 
 
 if __name__ == "__main__":
-    p=0.05
-    filePath='graph100-01.txt'
-    B=3
-    weightMatrix=ReadData(p,filePath)
-    nodeNum=np.shape(weightMatrix)[0]
-    myObject=ObjectiveIM(weightMatrix,nodeNum)
-    print(myObject.POMC(B))
+    for pp in range(20):
+        p=0.05
+        filePath='graph100-01.txt'
+        B=3
+        weightMatrix=ReadData(p,filePath)
+        nodeNum=np.shape(weightMatrix)[0]
+        myObject=ObjectiveIM(weightMatrix,nodeNum)
+        print(myObject.POMC(B))
 
 

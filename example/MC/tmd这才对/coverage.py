@@ -1,7 +1,7 @@
 import numpy as np
 
-graph = np.zeros([450, 450], dtype='int')
-with open('原版frb30-15-1.mis', 'r') as f:
+graph = np.zeros([595, 595], dtype='int')
+with open('yuanfrb35-17-1.mis', 'r') as f:
     lines = f.readlines()
     for l in lines:
         a, b = l.split(' ')

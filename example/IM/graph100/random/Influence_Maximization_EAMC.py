@@ -196,7 +196,7 @@ class ObjectiveIM(object):
         t = 0  # the current iterate count
         iter1 = 0
         T = int(ceil(self.n * self.n * 20))
-        kn = int(self.n * self.n)
+        kn = 2000
         while t < T:
             if iter1 == kn:
                 iter1 = 0
@@ -207,7 +207,7 @@ class ObjectiveIM(object):
                         maxValue = Yfitness[p, 0]
                         resultIndex = p
                 tempValue = self.EstimateObjective_accurate(Y[resultIndex, :])
-                print(tempValue,Yfitness[resultIndex, :], popSize)
+                print(t, tempValue,Yfitness[resultIndex, :], popSize)
             iter1 += 1
             s = population[randint(1, popSize) - 1, :]  # choose a individual from population randomly
             offSpring = self.mutation(s)  # every bit will be flipped with probability 1/n
@@ -314,12 +314,14 @@ def ReadData(p,filePath):
 
 
 if __name__ == "__main__":
-    p=0.05
-    filePath='graph100-01.txt'
-    B=3
-    weightMatrix=ReadData(p,filePath)
-    nodeNum=np.shape(weightMatrix)[0]
-    myObject=ObjectiveIM(weightMatrix,nodeNum)
-    print(myObject.EAMC(B))
+    for pp in range(20):
+
+        p=0.05
+        filePath='graph100-01.txt'
+        B=3
+        weightMatrix=ReadData(p,filePath)
+        nodeNum=np.shape(weightMatrix)[0]
+        myObject=ObjectiveIM(weightMatrix,nodeNum)
+        print(myObject.EAMC(B))
 
 

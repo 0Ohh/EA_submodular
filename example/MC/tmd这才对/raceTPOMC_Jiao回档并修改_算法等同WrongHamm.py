@@ -18,8 +18,8 @@ def setMuPT():
 
 class SUBMINLIN(object):
     def __init__(self):
-        self.n = 450
-        self.cost = np.ones(450, 'int')
+        self.n = 595
+        self.cost = np.ones(595, 'int')
 
     def Position(self, s):
         return np.where(s == 1)[0]
@@ -337,7 +337,7 @@ class SUBMINLIN(object):
 
             x_ori = np.copy(x)
 
-            # x, y = self.cross_over_2_part(x, y)
+            x, y = self.cross_over_2_part(x, y)
             # x, y = self.cross_over_partial(x, y)
             # x, y = self.cross_over_uniform(x, y)
 
@@ -346,7 +346,7 @@ class SUBMINLIN(object):
                 if len(best_record) > 2:
                     if best_record[-1] == best_record[-2]:
                         print(t, ' kakakakakakakaaaaaaaaaaaaa', pm)
-                        pm *= (1 + 0.02)
+                        pm *= (1 + 0.04)
                         # pm = pm
                     else:
                         pm = 1 / self.n
@@ -456,7 +456,7 @@ class SUBMINLIN(object):
         #     f_c_slots[x_slot_index, worst_x_index, 0] = f_x
         #     f_c_slots[x_slot_index, worst_x_index, 1] = cost_x
 
-        if (not x_is_added) and f_x >= worst_f and cost_x <= worst_cost:
+        if (not x_is_added) and f_x > worst_f:
             only_worst_f = np.inf
             only_worst_pi = []
             for p in range(delta):
@@ -491,6 +491,7 @@ class SUBMINLIN(object):
             #         best_1_at = p
             # only_worst_pi = [i for i in range(delta) if i != best_1_at]
             # # todo end 3.3.3.3.3.
+            # print('ham')
 
             worst_ham = np.inf
             worst_ham_index = None
@@ -508,7 +509,7 @@ class SUBMINLIN(object):
             x_ham = (np.multiply(temp_popN - temp_global, x) +
                          np.multiply(temp_global, 1 - x)
                         ).sum()
-            if x_ham > worst_ham or f_x > worst_f or f_x == worst_f and cost_x < worst_cost:
+            if x_ham > worst_ham:
                 x_is_added = True
                 self.global_sum = self.global_sum - popu_slots[x_slot_index, worst_ham_index] + x
                 popu_slots[x_slot_index, worst_ham_index] = x
@@ -529,7 +530,7 @@ class SUBMINLIN(object):
 
 
 if __name__ == "__main__":
-    n = 450
+    n = 595
 
     myObject = SUBMINLIN()
 

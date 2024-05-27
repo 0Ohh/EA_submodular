@@ -8,6 +8,7 @@ k = 10  # IOH set
 delta = 5
 epsilon = 3  # delta * (2e + 1) ~= 2k;  d, e = (4,2) or (7,1)
 n_sl = 2*epsilon + 1
+
 def Tposs():
 
     for i in range(7, 15):
@@ -16,6 +17,8 @@ def Tposs():
     popu_slots = np.zeros([n_sl, delta, n], 'int')
     popu_index_tuples = []
     f_slots = np.zeros([n_sl, delta], 'float')
+
+    all_sum = np.zeros(n, 'int')
     t = 0
     T = 600_0000
     # todo initial
@@ -57,18 +60,16 @@ def Tposs():
 
         # todo selection
         if card > k+epsilon or card < k-epsilon:
-            # print(x_sl_index, x_new.sum())
-            # if x_sl_index > 4:
-                # print(card, k-epsilon, k+epsilon)
             continue
         slot = popu_slots[x_sl_index]
         f_sl = f_slots[x_sl_index]
         add_info = (x_new, fx, slot, f_sl)
         f_min = np.inf
-        f_min_at = None
+        f_min_at = []
         if (f_sl == 0).all():  # todo empty
             add_x(add_info, 0)
             popu_index_tuples.append((x_sl_index, 0))
+            all_sum += x_new
             continue
         has = False
         for pi in range(delta):    # todo already has x_new
@@ -81,15 +82,40 @@ def Tposs():
             if f_sl[pi] == 0:
                 add_x(add_info, pi)
                 popu_index_tuples.append((x_sl_index, pi))
+                all_sum += x_new
                 added = True
             if f_sl[pi] < f_min:
                 f_min = f_sl[pi]
-                f_min_at = pi
+                f_min_at = [pi]
+            elif f_sl[pi] == f_min:
+                f_min_at.append(pi)
         if added: continue
-        if fx <= f_min:
+        if fx < f_min:  #todo   1111111111111111111111111111     1233333333333333333333333333333333333333333333333333333333
             continue
         else:
-            add_x(add_info, f_min_at)
+            if len(f_min_at) == 1 and fx > f_min:
+                add_x(add_info, f_min_at[0])
+                all_sum = all_sum + x_new - popu_slots[x_sl_index, f_min_at[0]]
+                print('fuck')
+                continue
+
+            temp_global = all_sum + x_new
+            ham_min = np.inf
+            worst_at = None
+            temp_popN = len(popu_index_tuples) + 1
+            for pi in f_min_at:
+                ham_i = (np.multiply(temp_popN - temp_global, popu_slots[pi]) +
+                         np.multiply(temp_global, 1 - popu_slots[pi])
+                        ).sum()
+                if ham_i < ham_min:
+                    ham_min = ham_i
+                    worst_at = pi
+            ham_x = (np.multiply(temp_popN - temp_global, x_new) +
+                         np.multiply(temp_global, 1 - x_new)
+                        ).sum()
+            if ham_x > ham_min:
+                add_x(add_info, worst_at)
+                all_sum = all_sum + x_new - popu_slots[x_sl_index, worst_at]
 
 
 def add_x(add_info, pi):

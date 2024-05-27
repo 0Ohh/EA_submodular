@@ -17,8 +17,8 @@ def setMuPT():
 
 class SUBMINLIN(object):
     def __init__(self):
-        self.n = 450
-        self.cost = np.ones(450)
+        self.n = 595
+        self.cost = np.ones(595)
 
     def Position(self, s):
         return np.where(s == 1)[0]
@@ -403,7 +403,7 @@ def GetDVCData(fileName):# node number start from 0
     i = 0
     file = open(fileName)
     lines = file.readlines()
-    while i < 450:
+    while i < 595:
         currentLine = []
         for line in lines:
             # if np.random.rand(1) > 0.3:
@@ -413,14 +413,14 @@ def GetDVCData(fileName):# node number start from 0
                 currentLine.append(int(int(items[1])-1))
         node_neighbor.append(currentLine)
         i += 1
-        # i = 450
+        # i = 595
 
     file.close()
     return node_neighbor
 
 
 if __name__ == "__main__":
-    n =450
+    n =595
 
     myObject = SUBMINLIN()
 
