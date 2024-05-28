@@ -13,7 +13,7 @@ import coverage
 class SUBMINLIN(object):
     def __init__(self):
         self.n = 595
-        self.cost = coverage.d_1costs
+        self.cost = coverage.degrees + 1
 
     def Position(self, s):
         return np.where(s == 1)[0]
@@ -23,7 +23,8 @@ class SUBMINLIN(object):
 
     def CS(self, s):
         # return coverage.Card(s)
-        return coverage.Cqua(s)
+        return coverage.C1(s)
+        # return coverage1.Cqua(s)
 
     def mutation_new(self, s, Tar, l_bound, r_bound, der=-1, prit=True):
         # 保证期望值
@@ -231,7 +232,7 @@ class SUBMINLIN(object):
                     fl.write(str(best_f_c[0]) + '\n')
                     fl.flush()
                     fl.close()
-                print(t, best_f_c[0], 'popsize', len(self.popu_index_tuples))
+                print(t, best_f_c[0], 'popsize', len(self.popu_index_tuples), 'card=', x_best.sum())
                 # print('f, cost=',  best_f_c, 'Card||=', x_best.sum(), 'popSize=', len(self.popu_index_tuples))
                 # print('last epoch unsuccessful_mutation rate', int(100*(unsuccessful_muts/all_muts)), '%')
                 # print('mutation to each slots ratio=', mut_to_slots)
@@ -243,17 +244,6 @@ class SUBMINLIN(object):
                 # if t > 5*print_tn:
                 #     setMuPT()
 
-                # if t % (10*print_tn) == 0:
-                #     print(f_c_slots)
-                #     print(self.global_sum, '------------> global sum')
-                # print(ham_slots)
-                #     crit = popu_slots[4]
-                #     for p in crit:
-                #         print(self.Hamming_Distance(p, crit))
-
-                # if 3*print_tn < t:
-                #     plt.plot(t_record, best_record)
-                #     plt.show()
 
             rand_ind = np.random.randint(0, len(self.popu_index_tuples))  # 随机选第几个x，几是相对于popSize而言的
             x_tuple = self.popu_index_tuples[rand_ind]
@@ -265,7 +255,7 @@ class SUBMINLIN(object):
 
             x_ori = np.copy(x)
 
-            x, y = self.cross_over_2_part(x, y)
+            # x, y = self.cross_over_2_part(x, y)
             # x, y = self.cross_over_partial(x, y)
             # x, y = self.cross_over_uniform(x, y)
 
@@ -359,119 +349,56 @@ class SUBMINLIN(object):
             self.global_sum += x
             return
 
-        worst_f_pis = np.argmin(ff_list)
-        worst_f = ff_list[worst_f_pis[0]]
-        worst_f_worst_c_pis = np.argmax(cc_list[worst_f_pis])
-        worst_f_worst_c = cc_list[worst_f_worst_c_pis[0]]
+
+        worst_f = np.min(ff_list)  # 没问题，获得ff最小值
+        worst_f_pis = np.where(ff_list == worst_f)[0]  # 获得ff最小值们的pi
+        worst_f_worst_c = -np.inf
+        worst_f_worst_c_pis = None
+        for pi in worst_f_pis:
+            if cc_list[pi] > worst_f_worst_c:
+                worst_f_worst_c = cc_list[pi]
+                worst_f_worst_c_pis = [pi]
+            elif cc_list[pi] == worst_f_worst_c:
+                worst_f_worst_c_pis.append(pi)
+
+        # worst_f_worst_c = np.max(cc_list[worst_f_pis])
+        # worst_f_worst_c_pis = np.where(cc_list == worst_f_worst_c)
+        # worst_f_worst_c = cc_list[worst_f_worst_c_pis[0]]
         # todo worst_f_pis =         0, 2, 3, 5, 7
         # todo worst_f_worst_c_pis = 0,    3, 5
-        if 
+        if f_x < worst_f or (f_x == worst_f and cost_x > worst_f_worst_c):
+            return   # fx比最差f严格更差，或者fx=最差f，但最差f一群中，f有最差的cost
         if len(worst_f_worst_c_pis) == 1:
             self.put_at(x, f_x, cost_x, pp_mat, ff_list, cc_list, worst_f_worst_c_pis[0])
             self.global_sum = self.global_sum + x - pp_mat[worst_f_worst_c_pis[0]]
             return
 
+        # todo 消融实验消融实验消融实验消融实验消融实验消融实验消融实验消融实验消融实验消融实验消融实验消融实验消融实验消融实验消融实验消融实验消融实验
+        # change_index = np.random.randint(0, len(worst_f_worst_c_pis))
+        # self.global_sum = self.global_sum + x - pp_mat[change_index]
+        # self.put_at(x, f_x, cost_x, pp_mat, ff_list, cc_list, change_index)
+        # return
+        # todo 消融实验结束结束结束结束结束结束结束结束结束结束结束结束结束结束结束结束结束结束结束结束结束结束结束结束结束结束结束结束结束结束结束
 
-
-    def pu577(self, x, x_slot_index, f_x, cost_x, popu_slots, f_c_slots, ham_slots, delta):
-        # TODO 把x与slot内所有个体比较 f，（可能需要维护slot全体f,c值的np array）
-        worst_x_index = None
-        worst_f = np.inf
-        worst_cost = -1.0
-        x_is_added = False
-
-        for p in range(0, delta):  # p-> (0~5)
-            if (popu_slots[x_slot_index, p] == x).all():
-                return
-
-        for p in range(0, delta):  # p-> (0~5)
-            if f_c_slots[x_slot_index, p, 1] == 0:  # (第p个)某旧个体cost==0，即全0gene,说明槽未满
-                # 直接把x放进这里
-                x_is_added = True
-                popu_slots[x_slot_index, p] = x
-                f_c_slots[x_slot_index, p, 0] = f_x
-                f_c_slots[x_slot_index, p, 1] = cost_x
-                self.popu_index_tuples.append((x_slot_index, p))
-                self.global_sum += x
-                break
-            if (f_c_slots[x_slot_index, p, 0] < worst_f
-                    or
-                    (f_c_slots[x_slot_index, p, 0] == worst_f and f_c_slots[x_slot_index, p, 1] >= worst_cost)
-            ):
-                # 遍历的第p比当前两方面最差的个体还要 更差（或一样差）
-                worst_f = f_c_slots[x_slot_index, p, 0]
-                worst_cost = f_c_slots[x_slot_index, p, 1]
-                worst_x_index = p
-
-        if (not x_is_added) and f_x > worst_f:  # x暂未加入，故当前槽已满，但新个体fx > 最差者的f
-            # x替换最差者
-            x_is_added = True
-            self.global_sum = self.global_sum - popu_slots[x_slot_index, worst_x_index] + x
-            popu_slots[x_slot_index, worst_x_index] = x
-            f_c_slots[x_slot_index, worst_x_index, 0] = f_x
-            f_c_slots[x_slot_index, worst_x_index, 1] = cost_x
-
-        if (not x_is_added) and f_x == worst_f and cost_x <= worst_cost:
-            worst_f = np.inf
-            worst_f_pi = []
-            for p in range(delta):
-                if f_c_slots[x_slot_index, p, 0] < worst_f:
-                    worst_f = f_c_slots[x_slot_index, p, 0]
-                    worst_f_pi = [p]
-                elif f_c_slots[x_slot_index, p, 0] == worst_f:
-                    worst_f_pi.append(p)
-            if len(worst_f_pi) == 1:
-                worst_f_pi = worst_f_pi[0]
-                # worst 只有一个
-                x_is_added = True
-                self.global_sum = self.global_sum - popu_slots[x_slot_index, worst_f_pi] + x
-                popu_slots[x_slot_index, worst_f_pi] = x
-                f_c_slots[x_slot_index, worst_f_pi, 0] = f_x
-                f_c_slots[x_slot_index, worst_f_pi, 1] = cost_x
-                return
-            # todo 对哪些个体使用Ｈａｍｍｉｎｇ筛选呢？
-            # TODO 1. 仅对拥有最差f的个体，忽略cost
-            # TODO 2. 仅对拥有最差f与最差cost的个体
-            # TODO 3. 对非最优的全部
-
-            # # todo 2.2.2.  把worst f  pi 变成worst f then worst c pi
-            # wor
-
-            # # todo end 2.2.2.2.
-
-            worst_ham = np.inf
-            worst_ham_index = None
-            temp_global = self.global_sum + x
-            temp_popN = self.popSize() + 1
-            for pi in worst_f_pi:
-                old_xi = popu_slots[x_slot_index, pi]
-                ham_i = (np.multiply(temp_popN - temp_global, old_xi) +
-                         np.multiply(temp_global, 1 - old_xi)
-                         ).sum()
-                if ham_i < worst_ham:
-                    worst_ham = ham_i
-                    worst_ham_index = pi
-
-            x_ham = (np.multiply(temp_popN - temp_global, x) +
+        worst_ham = np.inf
+        worst_ham_index = None
+        temp_global = self.global_sum + x
+        temp_popN = self.popSize() + 1
+        x_ham = (np.multiply(temp_popN - temp_global, x) +
                      np.multiply(temp_global, 1 - x)
                      ).sum()
-            if x_ham > worst_ham:
-                x_is_added = True
-                self.global_sum = self.global_sum - popu_slots[x_slot_index, worst_ham_index] + x
-                popu_slots[x_slot_index, worst_ham_index] = x
-                f_c_slots[x_slot_index, worst_ham_index, 0] = f_x
-                f_c_slots[x_slot_index, worst_ham_index, 1] = cost_x
-
-            # # # todo 消融实验
-            # wowo_c = -1
-            # wowo_pi = None
-            # for pi in worst_f_pi:
-            #     if f_c_slots[x_slot_index, pi, 1] > wowo_c:
-            #         wowo_c = f_c_slots[x_slot_index, pi, 1]
-            #         wowo_pi = pi
-            # popu_slots[x_slot_index, wowo_pi] = x
-            # f_c_slots[x_slot_index, wowo_pi, 0] = f_x
-            # f_c_slots[x_slot_index, wowo_pi, 1] = cost_x
+        for pi in worst_f_worst_c_pis:
+            old_xi = pp_mat[pi]
+            ham_i = (np.multiply(temp_popN - temp_global, old_xi) +
+                     np.multiply(temp_global, 1 - old_xi)
+                     ).sum()
+            if ham_i < worst_ham:
+                worst_ham = ham_i
+                worst_ham_index = pi
+        if x_ham > worst_ham:
+            self.global_sum = self.global_sum + x - pp_mat[worst_ham_index]
+            self.put_at(x, f_x, cost_x, pp_mat, ff_list, cc_list, worst_ham_index)
+            return
 
 
 if __name__ == "__main__":
@@ -480,7 +407,7 @@ if __name__ == "__main__":
 
         myObject = SUBMINLIN()
 
-        B = 500
+        B = 700
         n_sl = 20
         coo = np.array(myObject.cost)
 
